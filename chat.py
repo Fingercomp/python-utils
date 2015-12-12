@@ -1,0 +1,344 @@
+#!/usr/bin/env python3
+
+VERSION = "1.6"
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk, GLib, GObject
+from bs4 import BeautifulSoup as Soup
+import urllib.request as ur
+import urllib.parse as parse
+from threading import Thread
+from threading import Timer
+import sys
+import os.path
+import copy
+import requests
+import time
+import json
+
+GLib.threads_init()
+
+userdata = [i.strip() for i in open(
+               os.path.dirname(os.path.realpath(__file__)) + "/chat.cfg")
+               .readlines()]
+
+DELAY = 10
+URL = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&section=" \
+      "coreAjax&secure_key=" + userdata[0] + "&type=getShouts&lastid=1&" \
+      "global=1"
+URLSEND = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&" \
+          "section=coreAjax&secure_key=" + userdata[0] + "&type=submit&" \
+          "lastid=1&global=1"
+URLONLINE = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&" \
+            "section=coreAjax&secure_key=" + userdata[0] + "&type=getMembers" \
+            "&global=1"
+HEADERS = {
+  "Host": "computercraft.ru",
+  "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:42.0) " \
+                "Gecko/20100101 Firefox/42.0",
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.7,ru;q=0.3",
+  "Accept-Encoding": "utf-8",
+  "Cookie": userdata[1],
+  "Connection": "keep-alive",
+  "Cache-Control": "max-age=0",
+  "Pragma": "no-cache"
+}
+
+months = {
+  "Январь": "01",
+  "Февраль": "02",
+  "Март": "03",
+  "Апрель": "04",
+  "Май": "05",
+  "Июнь": "06",
+  "Июль": "07",
+  "Август": "08",
+  "Сентябрь": "09",
+  "Октябрь": "10",
+  "Ноябрь": "11",
+  "Декабрь": "12"
+}
+
+# http://stackoverflow.com/a/13151299
+class RepeatedTimer(object):
+    def __init__(self, interval, function, *args, **kwargs):
+        self._timer     = None
+        self.interval   = interval
+        self.function   = function
+        self.args       = args
+        self.kwargs     = kwargs
+        self.is_running = False
+        self.start()
+
+    def _run(self):
+        self.is_running = False
+        self.function(*self.args, **self.kwargs)
+        self.start()
+
+    def start(self):
+        if not self.is_running:
+            self._timer = Timer(self.interval, self._run)
+            self._timer.start()
+            self.is_running = True
+
+    def cancel(self):
+        self._timer.cancel()
+        self.is_running = False
+
+class DateTooltip(Gtk.Tooltip):
+  
+  def __init__(self, text=None, **kwargs):
+    super().__init__(**kwargs)
+    self.set_text(text)
+    self.text = text
+
+  def __call__(self, widget, x, y, keyboard, tooltip):
+    if self.text:
+      tooltip.set_text(self.text)
+
+    return True
+
+
+class Chat(Gtk.Window):
+  
+  def __init__(self):
+    Gtk.Window.__init__(self, title="CC.ru chat client [" + VERSION + "]")
+    self.set_default_size(500, 200)
+
+    self.timeout_id = None
+
+    grid = Gtk.Grid(column_spacing=5, row_spacing=5, hexpand=True,
+                    vexpand=True)
+    grid.set_border_width(5)
+    self.add(grid)
+
+    frame_chat = Gtk.Frame()
+
+    self.scrlwnd = Gtk.ScrolledWindow()
+    self.scrlwnd.set_vexpand(True)
+    self.scrlwnd.set_hexpand(True)
+    frame_chat.add(self.scrlwnd)
+    grid.attach(frame_chat, 1, 1, 6, 10)
+
+    self.chat_box = Gtk.Grid(row_spacing=10)
+    self.scrlwnd.add(self.chat_box)
+    self.chat_box.set_column_spacing(5)
+
+    frame_online = Gtk.Frame()
+
+    self.scrlwnd_online = Gtk.ScrolledWindow()
+    self.scrlwnd_online.set_vexpand(True)
+    self.scrlwnd_online.set_hexpand(False)
+    frame_online.add(self.scrlwnd_online)
+    grid.attach_next_to(frame_online, frame_chat,
+                        Gtk.PositionType.RIGHT, 4, 10)
+
+    self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+    self.scrlwnd_online.add(self.online_box)
+
+    self.scrlwnd_online.set_size_request(100, -1)
+
+    self.entry = Gtk.Entry()
+    self.entry.connect("activate", self.send_msg)
+    grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 6, 1)
+
+    self.btn_send = Gtk.Button(label=">")
+    self.btn_send.connect("clicked", self.send_msg)
+    grid.attach_next_to(self.btn_send, self.entry,
+                        Gtk.PositionType.RIGHT, 2, 1)
+
+    self.btn_upd = Gtk.Button(label="↻")
+    self.btn_upd.connect("clicked", self.bh_update)
+    grid.attach_next_to(self.btn_upd, self.btn_send,
+                        Gtk.PositionType.RIGHT, 2, 1)
+
+    self.lines = []
+    self.old_lines = []
+    self.online = []
+    self.updating = False
+    self.quitting = False
+
+    self.update_data()
+    self.update_gui()
+
+    self.timer_upd = RepeatedTimer(DELAY, self.update_data)
+    GLib.timeout_add(1000, self.update_gui)
+
+  def bh_quit(self, widget=None, *args):
+    self.quitting = True
+    while self.updating is True:
+      time.sleep(0.05)
+    self.timer_upd.cancel()
+    Gtk.main_quit()
+
+  def update_data(self, widget=None):
+    if self.quitting is True:
+      return False
+    if self.updating is False:
+      self.updating = True
+      self.lines = []
+      self.online = []
+      request = ur.Request(URL, headers=HEADERS)
+      response = ur.urlopen(request).read()
+      page = response.decode("utf-8")
+      html = Soup(page, "html.parser")
+      rows = html.find_all("tr")
+      for row in rows:
+        blocks = row.find_all("td")
+        author = blocks[0].find(class_="at_member")["data-store"]
+        author_short = author[:]
+        if len(author) > 16:
+          author_short = author[:16] + "…"
+        author_url = blocks[0].find("a", class_="_hovertrigger")["href"]
+        date = [i for i in blocks[2].find("span", class_="right").strings][0] \
+                .strip()[1:-1]
+        date_arr = date.split(" ")
+        month = months[date_arr[1]]
+        date = date_arr[2] + "-" + month + "-" + date_arr[0] + " " + date_arr[4]
+        date_short = date_arr[4]
+        raw_msg = blocks[2].find("span", class_="shoutbox_text").p
+  
+        msg = "".join([i for i in blocks[2] \
+                .find("span", class_="shoutbox_text").p.strings])
+        self.lines.append({"author": author, "author_short": author_short,
+                           "url": author_url, "date": date,
+                           "date_short": date_short, "msg": msg})
+      request = ur.Request(URLONLINE, headers=HEADERS)
+      response = json.loads(ur.urlopen(request).read().decode("utf-8"))
+      for user in response["NAMES"]:
+        html = Soup(user, "html.parser")
+        member = None
+        member_code = html.find("span")
+        if member_code:
+          member_links = html.find("span").find_all("a")
+          for link in member_links:
+            test = None
+            try:
+              test = link["onclick"]
+            except:
+              pass
+            if not test:
+              member = link
+          member_url = member["href"]
+          member = member.string
+        else:
+          member = user
+        member_url = "http://computercraft.ru/"
+        self.online.append({"user": member, "url": member_url})
+
+      self.updating = False
+
+  def update_gui(self, widget=None):
+    if self.updating is False:
+      self.btn_upd.set_sensitive(True)
+      if self.lines != self.old_lines:
+        prev = None
+        for child in self.chat_box.get_children():
+          child.destroy()
+        for line in self.lines:
+          label_user = Gtk.Label("@" + line["author_short"])
+          label_msg = Gtk.Label(line["msg"])
+          label_date = Gtk.Label(line["date_short"])
+          tooltip_date = DateTooltip(text=line["date"])
+          label_date.set_has_tooltip(True)
+          label_date.connect("query-tooltip", tooltip_date)
+          label_user.set_line_wrap(True)
+          label_msg.set_line_wrap(True)
+          label_date.set_line_wrap(True)
+          label_user.set_justify(Gtk.Justification.RIGHT)
+          label_msg.set_justify(Gtk.Justification.LEFT)
+          label_date.set_justify(Gtk.Justification.RIGHT)
+          label_msg.set_xalign(0)
+          label_msg.set_yalign(0)
+          label_user.set_xalign(0)
+          label_user.set_yalign(0)
+          label_user.set_selectable(True)
+          label_msg.set_selectable(True)
+          label_date.set_selectable(True)
+          if not prev:
+            self.chat_box.add(label_user)
+          else:
+            self.chat_box.attach_next_to(label_user, prev,
+                                         Gtk.PositionType.BOTTOM, 1, 1)
+          self.chat_box.attach_next_to(label_msg, label_user,
+                                       Gtk.PositionType.RIGHT, 1, 1)
+          self.chat_box.attach_next_to(label_date, label_msg,
+                                       Gtk.PositionType.RIGHT, 1, 1)
+          label_user.show()
+          label_msg.show()
+          label_date.show()
+          prev = label_user
+        self.old_lines = copy.deepcopy(self.lines)
+      for child in self.online_box.get_children():
+        child.destroy()
+      online_label = Gtk.Label("Online:")
+      online_label.set_xalign(1)
+      online_label.set_yalign(0)
+      online_label.set_justify(Gtk.Justification.RIGHT)
+      self.online_box.add(online_label)
+      online_label.show()
+      for user in self.online:
+        label = Gtk.Label(user["user"])
+        label.set_xalign(0)
+        label.set_yalign(0)
+        label.set_justify(Gtk.Justification.LEFT)
+        self.online_box.add(label)
+        label.show()
+    else:
+      self.btn_upd.set_sensitive(False)
+    return True
+  
+  def bh_update(self, widget=None):
+    self.thread_upd = Thread(target=self.update_data)
+    self.thread_upd.start()
+
+  def send_msg(self, widget=None):
+    self.sending = True
+    self.btn_send.set_sensitive(False)
+    self.entry.set_progress_pulse_step(0.2)
+    self.timeout_progress_entry = GObject.timeout_add(100, self.do_pulse, None)
+    msg = self.entry.get_text()
+    self.thread_send = Thread(target=self.send_msg_thread, args=(msg,))
+    self.thread_send.start()
+    self.timeout_check_sent = GObject.timeout_add(500, self.check_sent)
+
+  def do_pulse(self, *args):
+    self.entry.progress_pulse()
+    return True
+
+  def check_sent(self, *args):
+    if self.sending == False:
+      self.btn_send.set_sensitive(True)
+      GObject.source_remove(self.timeout_progress_entry)
+      self.timeout_progress_entry = None
+      self.entry.set_progress_pulse_step(0)
+      self.entry.set_text("")
+      self.bh_update()
+      self.update_gui()
+      return False
+    return True
+
+  def send_msg_thread(self, msg):
+    post_data = parse.quote(parse.quote(msg, safe=""), safe="")
+    headers = copy.deepcopy(HEADERS)
+    headers["Referer"] = "http://computercraft.ru/"
+    headers["X-Requested-With"] = "XMLHttpRequest"
+    headers["X-Prototype-Version"]= "1.7.1"
+    headers["Content-Type"] = "application/x-www-form-urlencoded; " \
+                              "charset=UTF-8"
+    headers["Accept-Encoding"] = "gzip, deflate"
+    headers["Accept"] = "text/javascript, text/html, application/xml, " \
+                        "text/xml, */*"
+    headers["Cache-Control"] = "no-cache"
+    r = requests.post(URLSEND, headers=headers, data={"shout": post_data})
+    self.sending = False
+
+
+win = Chat()
+win.connect("delete-event", win.bh_quit)
+win.show_all()
+Gtk.main()
+
+# vim: set autoindent tabstop=2 shiftwidth=2 expandtab:

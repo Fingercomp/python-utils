@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "1.9.1"
+VERSION = "1.9.2"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -13,6 +13,7 @@ import copy
 import requests
 import json
 import time
+from html.parser import HTMLParser
 
 GLib.threads_init()
 
@@ -154,10 +155,11 @@ class Chat(Gtk.Window):
       self.online = []
       request = requests.get(URLGET, headers=HEADERS)
       response = json.loads(request.text)
+      html_parser = HTMLParser()
       for line in reversed(response["Body"]["messages"]):
         self.lines.append({"user": line["user"],
                            "date": line["date"]["full"],
-                           "msg": line["text"],
+                           "msg": html_parser.unescape(line["text"]),
                            "short": line["date"]["short"]})
       request = requests.get(URLONLINE)
       response = json.loads(request.text)

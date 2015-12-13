@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "1.9.1"
+VERSION = "1.9.2"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -16,6 +16,7 @@ import copy
 import requests
 import time
 import json
+from html.parser import HTMLParser
 
 GLib.threads_init()
 
@@ -206,6 +207,8 @@ class Chat(Gtk.Window):
   
         msg = "".join([i for i in blocks[2] \
                 .find("span", class_="shoutbox_text").p.strings])
+        html_parser = HTMLParser()
+        msg = html_parser.unescape(msg)
         self.lines.append({"author": author, "author_short": author_short,
                            "url": author_url, "date": date,
                            "date_short": date_short, "msg": msg})

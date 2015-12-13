@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-VERSION = "1.9"
+VERSION = "1.9.1"
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib, GObject
+from gi.repository import Gtk, Gdk, GLib, GObject, Pango
 from threading import Thread
 from threading import Timer
 import sys
@@ -90,7 +90,7 @@ class Chat(Gtk.Window):
     self.scrlwnd.set_vexpand(True)
     self.scrlwnd.set_hexpand(True)
     frame_chat.add(self.scrlwnd)
-    grid.attach(frame_chat, 1, 1, 8, 10)
+    grid.attach(frame_chat, 1, 1, 10, 10)
 
     self.chat_box = Gtk.Grid(row_spacing=10)
     self.scrlwnd.add(self.chat_box)
@@ -108,11 +108,12 @@ class Chat(Gtk.Window):
 
     self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
     self.scrlwnd_online.add(self.online_box)
-    self.online_box.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(1, 1, 1, .8))
-
+    self.online_box.override_background_color(Gtk.StateType.NORMAL,
+                                              Gdk.RGBA(1, 1, 1, .8))
+    
     self.entry = Gtk.Entry()
     self.entry.connect("activate", self.send_msg)
-    grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 8, 1)
+    grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 10, 1)
 
     self.btn_send = Gtk.Button(label=">")
     self.btn_send.connect("clicked", self.send_msg)
@@ -180,6 +181,10 @@ class Chat(Gtk.Window):
         prev = None
         for child in self.chat_box.get_children():
           child.destroy()
+        test = Gtk.Label("") # Kashdil!
+        test.set_selectable(True)
+        test.modify_font(Pango.FontDescription("sans 1"))
+        self.chat_box.add(test)
         for line in self.lines:
           label_date = Gtk.Label(line["short"])
           tooltip_date = DateTooltip(text=line["date"])
@@ -189,6 +194,9 @@ class Chat(Gtk.Window):
           if line["user"]["is_admin"] is True:
             prefix = "@"
           label_user = Gtk.Label(prefix + line["user"]["name"])
+          tooltip_user = DateTooltip(text=line["user"]["login"])
+          label_user.set_has_tooltip(True)
+          label_user.connect("query-tooltip", tooltip_user)
           label_msg = Gtk.Label(line["msg"])
           label_date.set_line_wrap(True)
           label_user.set_line_wrap(True)
@@ -206,7 +214,7 @@ class Chat(Gtk.Window):
           label_user.set_selectable(True)
           label_msg.set_selectable(True)
           if not prev:
-            self.chat_box.add(label_date)
+            self.chat_box.attach(label_date, 1, 1, 1, 1)
           else:
             self.chat_box.attach_next_to(label_date, prev,
                                          Gtk.PositionType.BOTTOM, 1, 1)
@@ -219,12 +227,14 @@ class Chat(Gtk.Window):
           label_msg.show()
           prev = label_date
         self.old_lines = copy.deepcopy(self.lines)
+        test.hide()
       for child in self.online_box.get_children():
         child.destroy()
-      online_label = Gtk.Label("\t\tOnline:")
-      online_label.set_xalign(0)
-      online_label.set_yalign(0)
-      online_label.set_justify(Gtk.Justification.LEFT)
+      online_label = Gtk.Label()
+      online_label.set_markup("<span foreground=\"gray\">Online</span>")
+      online_label.set_xalign(.5)
+      online_label.set_yalign(.5)
+      online_label.set_justify(Gtk.Justification.CENTER)
       self.online_box.add(online_label)
       online_label.show()
       for user in self.online:
@@ -232,6 +242,9 @@ class Chat(Gtk.Window):
         if user["is_admin"]:
           prefix = "@"
         label = Gtk.Label(prefix + user["name"])
+        tooltip = DateTooltip(text=user["login"])
+        label.set_has_tooltip(True)
+        label.connect("query-tooltip", tooltip)
         label.set_xalign(0)
         label.set_yalign(0)
         label.set_justify(Gtk.Justification.LEFT)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-VERSION = "1.9"
+VERSION = "1.9.1"
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib, GObject
+from gi.repository import Gtk, Gdk, GLib, GObject, Pango
 from bs4 import BeautifulSoup as Soup
 import urllib.request as ur
 import urllib.parse as parse
@@ -241,6 +241,10 @@ class Chat(Gtk.Window):
         prev = None
         for child in self.chat_box.get_children():
           child.destroy()
+        test = Gtk.Label("") # Kashdil!
+        test.set_selectable(True)
+        test.modify_font(Pango.FontDescription("sans 1"))
+        self.chat_box.add(test)
         for line in self.lines:
           label_user = Gtk.Label("@" + line["author_short"])
           label_msg = Gtk.Label(line["msg"])
@@ -277,10 +281,11 @@ class Chat(Gtk.Window):
         self.old_lines = copy.deepcopy(self.lines)
       for child in self.online_box.get_children():
         child.destroy()
-      online_label = Gtk.Label("Online:")
-      online_label.set_xalign(1)
-      online_label.set_yalign(0)
-      online_label.set_justify(Gtk.Justification.RIGHT)
+      online_label = Gtk.Label("")
+      online_label.set_markup("<span foreground=\"gray\">Online</span>")
+      online_label.set_xalign(.5)
+      online_label.set_yalign(.5)
+      online_label.set_justify(Gtk.Justification.CENTER)
       self.online_box.add(online_label)
       online_label.show()
       for user in self.online:

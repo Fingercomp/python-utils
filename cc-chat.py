@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "1.8"
+VERSION = "1.9"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -20,8 +20,8 @@ import json
 GLib.threads_init()
 
 userdata = [i.strip() for i in open(
-               os.path.dirname(os.path.realpath(__file__)) + "/chat.cfg")
-               .readlines()]
+               os.path.expanduser("~") + \
+               "/.config/cc-chat.cfg").readlines()]
 
 DELAY = 10
 URL = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&section=" \
@@ -125,6 +125,8 @@ class Chat(Gtk.Window):
     self.chat_box = Gtk.Grid(row_spacing=10)
     self.scrlwnd.add(self.chat_box)
     self.chat_box.set_column_spacing(5)
+    self.chat_box.override_background_color(Gtk.StateType.NORMAL,
+                                            Gdk.RGBA(1, 1, 1, .8))
 
     frame_online = Gtk.Frame()
 
@@ -137,6 +139,8 @@ class Chat(Gtk.Window):
 
     self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
     self.scrlwnd_online.add(self.online_box)
+    self.online_box.override_background_color(Gtk.StateType.NORMAL,
+                                              Gdk.RGBA(1, 1, 1, .8))
 
     self.scrlwnd_online.set_size_request(100, -1)
 

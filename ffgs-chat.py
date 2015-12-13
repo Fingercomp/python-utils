@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "1.8"
+VERSION = "1.9"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -17,8 +17,8 @@ import time
 GLib.threads_init()
 
 userdata = [i.strip() for i in open(
-              os.path.dirname(os.path.realpath(__file__)) + "/ffgs-chat.cfg")
-              .readlines()]
+              os.path.expanduser("~") + \
+              "/.config/ffgs-chat.cfg").readlines()]
 
 DELAY = 10
 URLGET = "http://ffgs.ru/chat/getmsg?id=1"

@@ -113,6 +113,7 @@ class Chat(Gtk.Window):
     grid = Gtk.Grid(column_spacing=5, row_spacing=5, hexpand=True,
                     vexpand=True)
     grid.set_border_width(5)
+    grid.set_column_homogeneous(True)
     self.add(grid)
 
     frame_chat = Gtk.Frame()
@@ -121,7 +122,7 @@ class Chat(Gtk.Window):
     self.scrlwnd.set_vexpand(True)
     self.scrlwnd.set_hexpand(True)
     frame_chat.add(self.scrlwnd)
-    grid.attach(frame_chat, 1, 1, 6, 10)
+    grid.attach(frame_chat, 1, 1, 8, 10)
 
     self.chat_box = Gtk.Grid(row_spacing=10)
     self.scrlwnd.add(self.chat_box)
@@ -136,7 +137,7 @@ class Chat(Gtk.Window):
     self.scrlwnd_online.set_hexpand(False)
     frame_online.add(self.scrlwnd_online)
     grid.attach_next_to(frame_online, frame_chat,
-                        Gtk.PositionType.RIGHT, 4, 10)
+                        Gtk.PositionType.RIGHT, 2, 10)
 
     self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
     self.scrlwnd_online.add(self.online_box)
@@ -147,17 +148,17 @@ class Chat(Gtk.Window):
 
     self.entry = Gtk.Entry()
     self.entry.connect("activate", self.send_msg)
-    grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 6, 1)
+    grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 8, 1)
 
     self.btn_send = Gtk.Button(label=">")
     self.btn_send.connect("clicked", self.send_msg)
     grid.attach_next_to(self.btn_send, self.entry,
-                        Gtk.PositionType.RIGHT, 2, 1)
+                        Gtk.PositionType.RIGHT, 1, 1)
 
     self.btn_upd = Gtk.Button(label="↻")
     self.btn_upd.connect("clicked", self.bh_update)
     grid.attach_next_to(self.btn_upd, self.btn_send,
-                        Gtk.PositionType.RIGHT, 2, 1)
+                        Gtk.PositionType.RIGHT, 1, 1)
 
     self.lines = []
     self.old_lines = []
@@ -250,6 +251,9 @@ class Chat(Gtk.Window):
         self.chat_box.add(test)
         for line in self.lines:
           label_user = Gtk.Label("@" + line["author_short"])
+          tooltip_user = DateTooltip(text=line["author"])
+          label_user.set_has_tooltip(True)
+          label_user.connect("query-tooltip", tooltip_user)
           label_msg = Gtk.Label(line["msg"])
           label_date = Gtk.Label(line["date_short"])
           tooltip_date = DateTooltip(text=line["date"])

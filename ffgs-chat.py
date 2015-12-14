@@ -83,6 +83,7 @@ class Chat(Gtk.Window):
     grid = Gtk.Grid(column_spacing=5, row_spacing=5,
                     hexpand=True, vexpand=True)
     grid.set_border_width(5)
+    grid.set_column_homogeneous(True)
     self.add(grid)
 
     frame_chat = Gtk.Frame()
@@ -91,7 +92,7 @@ class Chat(Gtk.Window):
     self.scrlwnd.set_vexpand(True)
     self.scrlwnd.set_hexpand(True)
     frame_chat.add(self.scrlwnd)
-    grid.attach(frame_chat, 1, 1, 10, 10)
+    grid.attach(frame_chat, 1, 1, 8, 10)
 
     self.chat_box = Gtk.Grid(row_spacing=10)
     self.scrlwnd.add(self.chat_box)
@@ -114,7 +115,7 @@ class Chat(Gtk.Window):
     
     self.entry = Gtk.Entry()
     self.entry.connect("activate", self.send_msg)
-    grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 10, 1)
+    grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 8, 1)
 
     self.btn_send = Gtk.Button(label=">")
     self.btn_send.connect("clicked", self.send_msg)
@@ -157,9 +158,13 @@ class Chat(Gtk.Window):
       response = json.loads(request.text)
       html_parser = HTMLParser()
       for line in reversed(response["Body"]["messages"]):
+        user_short = line["user"]["name"]
+        if len(user_short) > 16:
+          user_short = user_short[:16] + "…"
         self.lines.append({"user": line["user"],
                            "date": line["date"]["full"],
                            "msg": html_parser.unescape(line["text"]),
+                           "user_short": user_short,
                            "short": line["date"]["short"]})
       request = requests.get(URLONLINE)
       response = json.loads(request.text)
@@ -195,8 +200,9 @@ class Chat(Gtk.Window):
           prefix = ""
           if line["user"]["is_admin"] is True:
             prefix = "@"
-          label_user = Gtk.Label(prefix + line["user"]["name"])
-          tooltip_user = DateTooltip(text=line["user"]["login"])
+          label_user = Gtk.Label(prefix + line["user_short"])
+          tooltip_user = DateTooltip(text=line["user"]["name"] + \
+            " (" + line["user"]["login"] + ")")
           label_user.set_has_tooltip(True)
           label_user.connect("query-tooltip", tooltip_user)
           label_msg = Gtk.Label(line["msg"])

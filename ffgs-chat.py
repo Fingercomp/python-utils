@@ -97,7 +97,8 @@ class Chat(Gtk.Window):
     self.chat_box = Gtk.Grid(row_spacing=10)
     self.scrlwnd.add(self.chat_box)
     self.chat_box.set_column_spacing(5)
-    self.chat_box.override_background_color(Gtk.StateType.NORMAL, Gdk.RGBA(1, 1, 1, .8))
+    self.chat_box.override_background_color(Gtk.StateType.NORMAL,
+                                            Gdk.RGBA(1, 1, 1, .8))
 
     frame_online = Gtk.Frame()
 
@@ -112,15 +113,16 @@ class Chat(Gtk.Window):
     self.scrlwnd_online.add(self.online_box)
     self.online_box.override_background_color(Gtk.StateType.NORMAL,
                                               Gdk.RGBA(1, 1, 1, .8))
-    
+
     self.entry = Gtk.Entry()
     self.entry.connect("activate", self.send_msg)
     grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 8, 1)
 
+
     self.btn_send = Gtk.Button(label=">")
     self.btn_send.connect("clicked", self.send_msg)
-    grid.attach_next_to(self.btn_send, self.entry,
-                        Gtk.PositionType.RIGHT, 1, 1)
+    grid.attach_next_to(self.btn_send, frame_online,
+                        Gtk.PositionType.BOTTOM, 1, 1)
 
     self.btn_upd = Gtk.Button(label="↻")
     self.btn_upd.connect("clicked", self.bh_update)

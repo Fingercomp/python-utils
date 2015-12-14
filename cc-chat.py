@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "1.9.2"
+VERSION = "1.10"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -205,11 +205,31 @@ class Chat(Gtk.Window):
         date = date_arr[2] + "-" + month + "-" + date_arr[0] + " " + date_arr[4]
         date_short = date_arr[4]
         raw_msg = blocks[2].find("span", class_="shoutbox_text").p
+        
+        for tag in raw_msg.find_all("img"):
+          tag.replace_with(tag["alt"])
+
+        for tag in raw_msg.find_all("a"):
+          tag.replace_with(tag["href"])
+
+        for tag in raw_msg.find_all("strong"):
+          tag.replace_with("㊵b㊶" + tag.string + "㊵/b㊶")
+
+        for tag in raw_msg.find_all("em"):
+          tag.replace_with("㊵i㊶" + tag.string + "㊵/i㊶")
+
+        for tag in raw_msg.find_all("span", style="color: black; font-family: courier; background-color: #EAEAEA"):
+          tag.replace_with("㊵span background=\"gray\" foreground=\"white\"㊶" + tag.string + "㊵/span㊶")
   
         msg = "".join([i for i in blocks[2] \
                 .find("span", class_="shoutbox_text").p.strings])
         html_parser = HTMLParser()
         msg = html_parser.unescape(msg)
+        msg = msg.replace("&", "&amp;")
+        msg = msg.replace("<", "&lt;")
+        msg = msg.replace(">", "&gt;")
+        msg = msg.replace("㊵", "<") # If you know even rarer used
+        msg = msg.replace("㊶", ">") # symbol, tell me, please
         self.lines.append({"author": author, "author_short": author_short,
                            "url": author_url, "date": date,
                            "date_short": date_short, "msg": msg})
@@ -254,7 +274,8 @@ class Chat(Gtk.Window):
           tooltip_user = DateTooltip(text=line["author"])
           label_user.set_has_tooltip(True)
           label_user.connect("query-tooltip", tooltip_user)
-          label_msg = Gtk.Label(line["msg"])
+          label_msg = Gtk.Label()
+          label_msg.set_markup(line["msg"])
           label_date = Gtk.Label(line["date_short"])
           tooltip_date = DateTooltip(text=line["date"])
           label_date.set_has_tooltip(True)

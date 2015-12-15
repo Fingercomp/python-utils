@@ -150,6 +150,12 @@ class Chat(Gtk.Window):
     self.timer_upd = RepeatedTimer(DELAY, self.update_data)
     GLib.timeout_add(1000, self.update_gui)
 
+  def cursor_fix(self, widget, step_type, step, *args):
+    if step == 1:
+      widget.get_parent().child_focus(Gtk.DirectionType.RIGHT)
+    elif step == -1:
+      widget.get_parent().child_focus(Gtk.DirectionType.LEFT)
+
   def bh_quit(self, widget=None, *args):
     self.quitting = True
     while self.updating is True:
@@ -262,6 +268,9 @@ class Chat(Gtk.Window):
           label_date.set_selectable(True)
           label_user.set_selectable(True)
           label_msg.set_selectable(True)
+          label_date.connect("move-cursor", self.cursor_fix)
+          label_user.connect("move-cursor", self.cursor_fix)
+          label_msg.connect("move-cursor", self.cursor_fix)
           if not prev:
             self.chat_box.attach(label_date, 1, 1, 1, 1)
           else:

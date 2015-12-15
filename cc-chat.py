@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "1.11"
+VERSION = "1.12"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -166,6 +166,7 @@ class Chat(Gtk.Window):
     self.lines = []
     self.old_lines = []
     self.online = []
+    self.user_links = {}
     self.updating = False
     self.quitting = False
 
@@ -183,12 +184,22 @@ class Chat(Gtk.Window):
 
   def paste_nick(self, widget, event):
     if event.button == 1:
-      if event.state & Gdk.ModifierType.CONTROL_MASK == 4:
+      if event.state & Gdk.ModifierType.CONTROL_MASK == \
+          Gdk.ModifierType.CONTROL_MASK:
         nickname = widget.get_text()
         suffix = " "
         if self.entry.get_text() == "":
           suffix = ", "
         self.entry.set_text(self.entry.get_text() + nickname + suffix)
+      elif event.state & Gdk.ModifierType.MOD1_MASK == \
+          Gdk.ModifierType.MOD1_MASK:
+        link = ""
+        try:
+          link = self.user_links[widget.get_text()[1:]]
+        except:
+          pass
+        if link != "":
+          Gtk.show_uri(None, link, Gdk.CURRENT_TIME)
     return True
 
   def bh_quit(self, widget=None, *args):
@@ -255,6 +266,7 @@ class Chat(Gtk.Window):
         self.lines.append({"author": author, "author_short": author_short,
                            "url": author_url, "date": date,
                            "date_short": date_short, "msg": msg})
+        self.user_links[author] = author_url
       request = ur.Request(URLONLINE, headers=HEADERS)
       response = json.loads(ur.urlopen(request).read().decode("utf-8"))
       for user in response["NAMES"]:
@@ -277,6 +289,7 @@ class Chat(Gtk.Window):
           member = user
         member_url = "http://computercraft.ru/"
         self.online.append({"user": member, "url": member_url})
+        #self.user_links[member] = member_url
 
       self.updating = False
 

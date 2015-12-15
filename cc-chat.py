@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "1.10"
+VERSION = "1.11"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -181,6 +181,16 @@ class Chat(Gtk.Window):
     elif step == -1:
       widget.get_parent().child_focus(Gtk.DirectionType.LEFT)
 
+  def paste_nick(self, widget, event):
+    if event.button == 1:
+      if event.state & Gdk.ModifierType.CONTROL_MASK == 4:
+        nickname = widget.get_text()
+        suffix = " "
+        if self.entry.get_text() == "":
+          suffix = ", "
+        self.entry.set_text(self.entry.get_text() + nickname + suffix)
+    return True
+
   def bh_quit(self, widget=None, *args):
     self.quitting = True
     while self.updating is True:
@@ -286,6 +296,7 @@ class Chat(Gtk.Window):
           tooltip_user = DateTooltip(text=line["author"])
           label_user.set_has_tooltip(True)
           label_user.connect("query-tooltip", tooltip_user)
+          label_user.connect("button-press-event", self.paste_nick)
           label_msg = Gtk.Label()
           label_msg.set_markup(line["msg"])
           label_date = Gtk.Label(line["date_short"])

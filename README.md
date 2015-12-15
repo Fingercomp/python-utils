@@ -32,7 +32,7 @@
 ### cc-chat
 Работает с чатиком на [cc.ru](computercraft.ru). В отличии от программы выше, здесь огромное число костылей: такой API.
 Тем не менее, оно работает.
-[Скрин окна](http://i.imgur.com/bEuXvpq.png)
+![Скрин окна](http://i.imgur.com/bEuXvpq.png)
 
 **Настройка**:
 * Создайте файл ~/.config/cc-chat.py.

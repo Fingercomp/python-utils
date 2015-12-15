@@ -62,6 +62,9 @@ months = {
   "Декабрь": "12"
 }
 
+lt = "\uf8f0"
+gt = "\uf8f1"
+
 # http://stackoverflow.com/a/13151299
 class RepeatedTimer(object):
     def __init__(self, interval, function, *args, **kwargs):
@@ -213,13 +216,13 @@ class Chat(Gtk.Window):
           tag.replace_with(tag["href"])
 
         for tag in raw_msg.find_all("strong"):
-          tag.replace_with("㊵b㊶" + tag.string + "㊵/b㊶")
+          tag.replace_with(lt + "b" + gt + tag.string + lt + "/b" + gt)
 
         for tag in raw_msg.find_all("em"):
-          tag.replace_with("㊵i㊶" + tag.string + "㊵/i㊶")
+          tag.replace_with(lt + "i" + gt + tag.string + lt + "/i" + gt)
 
         for tag in raw_msg.find_all("span", style="color: black; font-family: courier; background-color: #EAEAEA"):
-          tag.replace_with("㊵span background=\"gray\" foreground=\"white\"㊶" + tag.string + "㊵/span㊶")
+          tag.replace_with(lt + "span background=\"gray\" foreground=\"white\"" + gt + tag.string + lt + "/span" + gt)
   
         msg = "".join([i for i in blocks[2] \
                 .find("span", class_="shoutbox_text").p.strings])
@@ -228,8 +231,8 @@ class Chat(Gtk.Window):
         msg = msg.replace("&", "&amp;")
         msg = msg.replace("<", "&lt;")
         msg = msg.replace(">", "&gt;")
-        msg = msg.replace("㊵", "<") # If you know even rarer used
-        msg = msg.replace("㊶", ">") # symbol, tell me, please
+        msg = msg.replace(lt, "<")
+        msg = msg.replace(gt, ">")
         self.lines.append({"author": author, "author_short": author_short,
                            "url": author_url, "date": date,
                            "date_short": date_short, "msg": msg})

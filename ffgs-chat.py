@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "1.9.2"
+VERSION = "1.10"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -14,6 +14,7 @@ import requests
 import json
 import time
 from html.parser import HTMLParser
+from bs4 import BeautifulSoup as Soup
 
 GLib.threads_init()
 
@@ -28,6 +29,13 @@ URLONLINE = "http://ffgs.ru/chat/getonline"
 URLUSER = "http://ffgs.ru/chat/getuser"
 HEADERS = {
   "Cookie": "PHPSESSID=" + userdata[0]
+}
+
+lt = "\uf8f0"
+gt = "\uf8f1"
+tags2replace = {
+  "strong": "b",
+  "em": "i",
 }
 
 # http://stackoverflow.com/a/13151299
@@ -161,11 +169,41 @@ class Chat(Gtk.Window):
       html_parser = HTMLParser()
       for line in reversed(response["Body"]["messages"]):
         user_short = line["user"]["name"]
+        msg = line["text"]
         if len(user_short) > 16:
           user_short = user_short[:16] + "…"
+        for tag in tags2replace:
+          rp_text = tags2replace[tag]
+          msg = msg.replace("<" + tag + ">", lt + rp_text + gt) \
+            .replace("</" + tag + ">", lt + "/" + rp_text + gt)
+        html = Soup(msg, "html.parser")
+        for tag in html.find_all("span", class_="spoiler"):
+          cl = ""
+          style = ""
+          try:
+            cl = tag["class"][0]
+          except:
+            try:
+              style = tag["style"]
+            except:
+              pass
+          if cl == "spoiler":
+            tag.replace_with(lt + \
+              "span foreground=\"white\" background=\"black\"" + gt + \
+              "[" + tag.string + "]" + lt + "/span" + gt)
+          if style == "text-decoration: underline;":
+            tag.replace_with(lt + "u" + gt + tag.string + lt + "/u" + gt)
+          elif style == "text-decoration: line-through;":
+            tag.replace_with(lt + "s" + gt + tag.string + lt + "/s" + gt)
+          elif style == "text-decoration: overline;":
+            tag.replace_with(lt + "s" + gt + tag.string + lt + "/s" + gt)
+        msg = html_parser.unescape(str(html))
+        msg = msg.replace("<", "&lt;").replace(">", "&gt;")
+        msg = msg.replace(lt, "<").replace(gt, ">")
+        msg = msg.replace("&", "&amp;")
         self.lines.append({"user": line["user"],
                            "date": line["date"]["full"],
-                           "msg": html_parser.unescape(line["text"]),
+                           "msg": msg,
                            "user_short": user_short,
                            "short": line["date"]["short"]})
       request = requests.get(URLONLINE)
@@ -207,7 +245,8 @@ class Chat(Gtk.Window):
             " (" + line["user"]["login"] + ")")
           label_user.set_has_tooltip(True)
           label_user.connect("query-tooltip", tooltip_user)
-          label_msg = Gtk.Label(line["msg"])
+          label_msg = Gtk.Label()
+          label_msg.set_markup(line["msg"])
           label_date.set_line_wrap(True)
           label_user.set_line_wrap(True)
           label_msg.set_line_wrap(True)

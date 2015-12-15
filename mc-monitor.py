@@ -22,7 +22,7 @@ SERVERSFILE = "/home/fingercomp/monitor.conf"
 
 nots = True
 
-if os.name == "nt" or True:
+if os.name == "nt":
     # Windows, turn off notifications
     nots = False
 

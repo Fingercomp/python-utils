@@ -213,7 +213,8 @@ class Chat(Gtk.Window):
           tag.replace_with(tag["alt"])
 
         for tag in raw_msg.find_all("a"):
-          tag.replace_with(tag["href"])
+          tag.replace_with(lt + "a href=\"" + tag["href"] + "\" title=\"" + \
+            tag["title"] + "\"" + gt + tag.string + lt + "/a" + gt)
 
         for tag in raw_msg.find_all("strong"):
           tag.replace_with(lt + "b" + gt + tag.string + lt + "/b" + gt)
@@ -221,8 +222,10 @@ class Chat(Gtk.Window):
         for tag in raw_msg.find_all("em"):
           tag.replace_with(lt + "i" + gt + tag.string + lt + "/i" + gt)
 
-        for tag in raw_msg.find_all("span", style="color: black; font-family: courier; background-color: #EAEAEA"):
-          tag.replace_with(lt + "span background=\"gray\" foreground=\"white\"" + gt + tag.string + lt + "/span" + gt)
+        for tag in raw_msg.find_all("span", style="color: black; " + \
+          "font-family: courier; background-color: #EAEAEA"):
+          tag.replace_with(lt + "span background=\"gray\" " + \
+            "foreground=\"white\"" + gt + tag.string + lt + "/span" + gt)
   
         msg = "".join([i for i in blocks[2] \
                 .find("span", class_="shoutbox_text").p.strings])

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "1.12"
+VERSION = "2.0.0-pre1"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -65,6 +65,8 @@ months = {
 lt = "\uf8f0"
 gt = "\uf8f1"
 
+root = Gtk.Application()
+
 # http://stackoverflow.com/a/13151299
 class RepeatedTimer(object):
     def __init__(self, interval, function, *args, **kwargs):
@@ -108,7 +110,7 @@ class DateTooltip(Gtk.Tooltip):
 class Chat(Gtk.Window):
   
   def __init__(self):
-    Gtk.Window.__init__(self, title="CC.ru chat client [" + VERSION + "]")
+    super().__init__(title="CC.ru chat client [" + VERSION + "]")
     self.set_default_size(500, 200)
 
     self.timeout_id = None
@@ -162,7 +164,12 @@ class Chat(Gtk.Window):
     self.btn_upd.connect("clicked", self.bh_update)
     grid.attach_next_to(self.btn_upd, self.btn_send,
                         Gtk.PositionType.RIGHT, 1, 1)
+    
+    self.ind = Gtk.StatusIcon.new()
+    self.ind.set_from_icon_name("people")
+    self.ind.connect("activate", self.toggle_visibility)
 
+    self.hidden = False
     self.lines = []
     self.old_lines = []
     self.online = []
@@ -175,6 +182,16 @@ class Chat(Gtk.Window):
 
     self.timer_upd = RepeatedTimer(DELAY, self.update_data)
     GLib.timeout_add(1000, self.update_gui)
+
+  def toggle_visibility(self, widget):
+    if self.hidden:
+      root.release()
+      self.set_visible(True)
+    else:
+      root.hold()
+      self.set_visible(False)
+    self.hidden = not self.hidden
+    return True
 
   def cursor_fix(self, widget, step_type, step, *args):
     if step == 1:

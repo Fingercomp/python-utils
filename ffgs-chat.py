@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-VERSION = "1.11"
+VERSION = "2.0.0-pre1"
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib, GObject, Pango
+from gi.repository import Gtk, Gdk, GLib, GObject, Pango, Gio
 from threading import Thread
 from threading import Timer
 import sys
@@ -37,6 +37,8 @@ tags2replace = {
   "strong": "b",
   "em": "i",
 }
+
+root = Gtk.Application.new(None, 0)
 
 # http://stackoverflow.com/a/13151299
 class RepeatedTimer(object):
@@ -83,7 +85,7 @@ class DateTooltip(Gtk.Tooltip):
 class Chat(Gtk.Window):
   
   def __init__(self):
-    Gtk.Window.__init__(self, title="FFGS chat client [" + VERSION + "]")
+    super().__init__(title="FFGS chat client [" + VERSION + "]")
     self.set_default_size(500, 200)
 
     self.timeout_id = None
@@ -137,18 +139,33 @@ class Chat(Gtk.Window):
     grid.attach_next_to(self.btn_upd, self.btn_send,
                         Gtk.PositionType.RIGHT, 1, 1)
 
+    self.ind = Gtk.StatusIcon.new()
+    self.ind.set_from_icon_name("people")
+    self.ind.connect("activate", self.toggle_visibility)
+
     self.lines = []
     self.old_lines = []
     self.online = []
     self.updating = False
     self.quitting = False
     self.logged = False
+    self.hidden = False
 
     self.update_data()
     self.update_gui()
 
     self.timer_upd = RepeatedTimer(DELAY, self.update_data)
     GLib.timeout_add(1000, self.update_gui)
+
+  def toggle_visibility(self, widget):
+    if self.hidden:
+      root.release()
+      self.set_visible(True)
+    else:
+      root.hold()
+      self.set_visible(False)
+    self.hidden = not self.hidden
+    return True
 
   def cursor_fix(self, widget, step_type, step, *args):
     if step == 1:

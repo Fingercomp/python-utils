@@ -159,13 +159,14 @@ class Chat(Gtk.Window):
   def paste_nick(self, widget, event):
     if event.button == 1:
       if event.state & Gdk.ModifierType.CONTROL_MASK == 4:
-        nickname = widget.get_text()
-        suffix = " "
-        if nickname[:1] != "@":
-          nickname = "@" + nickname
-        if self.entry.get_text() == "":
-          suffix = ", "
-        self.entry.set_text(self.entry.get_text() + nickname + suffix)
+        if self.logged:
+          nickname = widget.get_text()
+          if nickname[:1] != "@":
+            nickname = "@" + nickname
+          self.entry.do_insert_at_cursor(self.entry, nickname + " ")
+          self.entry.grab_focus_without_selecting()
+          move_at = self.entry.props.cursor_position + len(nickname) + 1
+          self.entry.do_move_cursor(self.entry, Gtk.MovementStep.LOGICAL_POSITIONS, move_at, False)
     return True
 
   def bh_quit(self, widget=None, *args):

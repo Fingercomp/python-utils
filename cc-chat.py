@@ -187,10 +187,10 @@ class Chat(Gtk.Window):
       if event.state & Gdk.ModifierType.CONTROL_MASK == \
           Gdk.ModifierType.CONTROL_MASK:
         nickname = widget.get_text()
-        suffix = " "
-        if self.entry.get_text() == "":
-          suffix = ", "
-        self.entry.set_text(self.entry.get_text() + nickname + suffix)
+        self.entry.do_insert_at_cursor(self.entry, nickname + " ")
+        self.entry.grab_focus_without_selecting()
+        move_at = self.entry.props.cursor_position + len(nickname) + 1
+        self.entry.do_move_cursor(self.entry, Gtk.MovementStep.LOGICAL_POSITIONS, move_at, False)
       elif event.state & Gdk.ModifierType.MOD1_MASK == \
           Gdk.ModifierType.MOD1_MASK:
         link = ""

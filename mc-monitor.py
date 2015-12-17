@@ -24,7 +24,7 @@ config = home + ".local/share/python-utils/"
 
 # CONFIGURATION
 if not os.path.exists(config):
-    os.makedirs(config, exist_ok=True)
+    os.makedirs(config)
 
 if not os.path.exists(config + "mc-monitor/"):
     os.mkdir(config + "mc-monitor/")

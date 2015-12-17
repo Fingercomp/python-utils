@@ -24,7 +24,7 @@ config = home + ".local/share/python-utils/"
 
 # CONFIGURATION
 if not os.path.exists(config):
-  os.makedirs(config)
+  os.makedirs(config, exist_ok=True)
 
 if not os.path.exists(config + "ffgs-chat.cfg"):
   # TODO: create the file automatically [#10]

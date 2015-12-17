@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-VERSION = "2.0.0-pre1"
+VERSION = "2.0.0-pre2"
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib, GObject, Pango, Gio
 from threading import Thread
 from threading import Timer
+import urllib.request as ur
 import sys
 import os.path
 import copy
@@ -17,6 +18,28 @@ from html.parser import HTMLParser
 from bs4 import BeautifulSoup as Soup
 
 GLib.threads_init()
+
+home = os.path.expanduser("~") + "/"
+config = home + ".local/share/python-utils/"
+
+# CONFIGURATION
+if not os.path.exists(config):
+  os.makedirs(config, exist_ok=True)
+
+if not os.path.exists(config + "ffgs-chat.cfg"):
+  # TODO: create the file automatically [#10]
+  pass
+
+if not os.path.exists(config + "icons/"):
+  os.mkdir(config + "icons/")
+
+if not os.path.exists(config + "icons/ffgs-chat-icon.png"):
+  response = ur.urlopen("https://raw.githubusercontent.com/Fingercomp/" \
+    "python-utils/master/icons/ffgs-chat-icon.png")
+  f = open(config + "icons/ffgs-chat-icon.png", "wb")
+  img = response.read()
+  f.write(img)
+  f.close()
 
 userdata = [i.strip() for i in open(
               os.path.expanduser("~") + \
@@ -140,7 +163,7 @@ class Chat(Gtk.Window):
                         Gtk.PositionType.RIGHT, 1, 1)
 
     self.ind = Gtk.StatusIcon.new()
-    self.ind.set_from_icon_name("people")
+    self.ind.set_from_file(config + "icons/ffgs-chat-icon.png")
     self.ind.connect("activate", self.toggle_visibility)
 
     self.lines = []

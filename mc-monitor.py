@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
+# VERSION: 1.13
+
 from mcstatus import MinecraftServer
 import sys
 import gi
@@ -13,12 +15,50 @@ import datetime as dt
 from threading import Thread
 from threading import Timer
 import os
+import urllib as ur
 
 GLib.threads_init()
 
+home = os.path.expanduser("~") + "/"
+config = home + ".local/share/python-utils/"
+
+# CONFIGURATION
+if not os.path.exists(config):
+    os.makedirs(config, exist_ok=True)
+
+if not os.path.exists(config + "mc-monitor/"):
+    os.mkdir(config + "mc-monitor/")
+
+if not os.path.exists(config + "mc-monitor/mc-monitor.cfg"):
+    # TODO: create the file automatically [#10]
+    pass
+
+if not os.path.exists(config + "mc-monitor/vote"):
+    f = open(config + "mc-monitor/vote", "w")
+    f.write("2012 12 12 12 12 12")
+
+if not os.path.exists(config + "icons/"):
+    os.mkdir(config + "icons/")
+
+if not os.path.exists(config + "icons/mc-monitor.png"):
+    response = ur.urlopen("https://raw.githubusercontent.com/Fingercomp/" \
+        "python-utils/master/icons/mc-monitor.png")
+    f = open(config + "icons/mc-monitor.png", "wb")
+    img = response.read()
+    f.write(img)
+    f.close()
+
+if not os.path.exists(config + "icons/mc-monitor-important.png"):
+    response = ur.urlopen("https://raw.githubusercontent.com/Fingercomp/" \
+        "python-utils/master/icons/mc-monitor-important.png")
+    f = open(config + "icons/mc-monitor-important.png", "wb")
+    img = response.read()
+    f.write(img)
+    f.close()
+
 DELAY = 15
-VOTEFILE = "/home/fingercomp/votetime"
-SERVERSFILE = "/home/fingercomp/monitor.conf"
+VOTEFILE = config + "mc-monitor/vote"
+SERVERSFILE = config + "mc-monitor/mc-monitor.cfg"
 
 nots = True
 
@@ -58,7 +98,7 @@ class RepeatedTimer(object):
 
 class CheckServers:
     def __init__(self):
-        self.ind = Gtk.StatusIcon.new_from_icon_name("server")
+        self.ind = Gtk.StatusIcon.new_from_file(config + "icons/mc-monitor.png")
         self.ind.set_tooltip_text("...")
 
         self.servers = {}
@@ -153,14 +193,14 @@ class CheckServers:
         cur_time = dt.datetime.now()
         if cur_time >= vote_at:
             self.vote_item.set_sensitive(True)
-            self.ind.set_from_icon_name("important")
+            self.ind.set_from_file("icons/mc-monitor-important.png")
             self.vote_item.set_label("Restart the timer")
             if self.show_notification is False and nots is True:
                 self.show_notification = True
                 self.notification.show()
                 GLib.timeout_add(30000, self.Notify_vote)
         else:
-            self.ind.set_from_icon_name("server")
+            self.ind.set_from_file(config + "icons/mc-monitor.png")
             vote_delta = vote_at - cur_time
             self.vote_item.set_label("Next vote: " + str(vote_delta).split(".")[0])
             self.vote_item.set_sensitive(False)

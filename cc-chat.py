@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "2.0.0-pre1"
+VERSION = "2.0.0-pre2"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -20,9 +20,29 @@ from html.parser import HTMLParser
 
 GLib.threads_init()
 
-userdata = [i.strip() for i in open(
-               os.path.expanduser("~") + \
-               "/.config/cc-chat.cfg").readlines()]
+home = os.path.expanduser("~") + "/"
+config = home + ".local/share/python-utils/"
+
+# CONFIGURATION
+if not os.path.exists(config):
+  os.makedirs(config, exist_ok=True)
+
+if not os.path.exists(config + "cc-chat.cfg"):
+  # TODO: create the file automatically [#10]
+  pass
+
+if not os.path.exists(config + "icons/"):
+  os.mkdir(config + "icons/")
+
+if not os.path.exists(config + "icons/cc-chat-icon.png"):
+  response = ur.urlopen("https://raw.githubusercontent.com/Fingercomp/" \
+    "python-utils/master/icons/cc-chat-icon.png")
+  f = open(config + "icons/cc-chat-icon.png", "wb")
+  img = response.read()
+  f.write(img)
+  f.close()
+
+userdata = [i.strip() for i in open(config + "cc-chat.cfg").readlines()]
 
 DELAY = 10
 URL = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&section=" \
@@ -166,7 +186,7 @@ class Chat(Gtk.Window):
                         Gtk.PositionType.RIGHT, 1, 1)
     
     self.ind = Gtk.StatusIcon.new()
-    self.ind.set_from_icon_name("people")
+    self.ind.set_from_file(config + "icons/cc-chat-icon.png")
     self.ind.connect("activate", self.toggle_visibility)
 
     self.hidden = False

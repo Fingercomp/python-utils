@@ -36,7 +36,7 @@
 ![Скрин окна](http://i.imgur.com/bEuXvpq.png)
 
 **Настройка**:
-* Создайте файл `~/.local/share/python-utils/cc-chat.py`.
+* Создайте файл `~/.local/share/python-utils/cc-chat.cfg`.
 * Авторизуйтесь на сайте [cc.ru](http://computercraft.ru/).
 * Откройте Инспектор.
 * Перейдите на вкладку "Сеть".

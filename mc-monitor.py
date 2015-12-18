@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
-# VERSION: 1.13
+# VERSION: 1.14
 
 from mcstatus import MinecraftServer
 import sys
@@ -30,8 +30,17 @@ if not os.path.exists(config + "mc-monitor/"):
     os.mkdir(config + "mc-monitor/")
 
 if not os.path.exists(config + "mc-monitor/mc-monitor.cfg"):
-    # TODO: create the file automatically [#10]
-    pass
+    f = open(config + "mc-monitor/mc-monitor.cfg", "w")
+    f.write("")
+    f.close()
+    dialog = Gtk.MessageDialog(parent=Gtk.Window(),
+                               message_type=Gtk.MessageType.INFO,
+                               buttons=Gtk.ButtonsType.OK,
+                               message_format="Configuration file created!")
+    dialog.format_secondary_markup("Path to file: <b>" + config + \
+    "mc-monitor/mc-monitor.cfg</b>.")
+    dialog.run()
+    dialog.destroy()
 
 if not os.path.exists(config + "mc-monitor/vote"):
     f = open(config + "mc-monitor/vote", "w")

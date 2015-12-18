@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "2.0.0-pre2"
+VERSION = "2.0.0-pre3"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -28,8 +28,17 @@ if not os.path.exists(config):
   os.makedirs(config, exist_ok=True)
 
 if not os.path.exists(config + "cc-chat.cfg"):
-  # TODO: create the file automatically [#10]
-  pass
+  f = open(config + "cc-chat.cfg", "w")
+  f.write("")
+  f.close()
+  dialog = Gtk.MessageDialog(parent=Gtk.Window(),
+                             message_type=Gtk.MessageType.INFO,
+                             buttons=Gtk.ButtonsType.OK,
+                             message_format="Configuration file created!")
+  dialog.format_secondary_markup("Path to file: <b>" + config + \
+    "cc-chat.cfg</b>.")
+  dialog.run()
+  dialog.destroy()
 
 if not os.path.exists(config + "icons/"):
   os.mkdir(config + "icons/")
@@ -43,6 +52,20 @@ if not os.path.exists(config + "icons/cc-chat-icon.png"):
   f.close()
 
 userdata = [i.strip() for i in open(config + "cc-chat.cfg").readlines()]
+
+if len(userdata) != 2:
+  mpl = "s"
+  if len(userdata) == 1:
+    mpl = ""
+  dialog = Gtk.MessageDialog(parent=Gtk.Window(),
+                             message_type=Gtk.MessageType.ERROR,
+                             buttons=Gtk.ButtonsType.CLOSE,
+                             message_format="Bad config!")
+  dialog.format_secondary_markup("Got " + str(len(userdata)) + " line" + \
+    mpl + ", expected 2")
+  dialog.run()
+  dialog.destroy()
+  sys.exit(-1)
 
 DELAY = 10
 URL = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&section=" \

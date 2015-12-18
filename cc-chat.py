@@ -274,82 +274,96 @@ class Chat(Gtk.Window):
       return False
     if self.updating is False:
       self.updating = True
+      old_lines = copy.deepcopy(self.lines)
+      old_online = copy.deepcopy(self.online)
       self.lines = []
       self.online = []
       request = ur.Request(URL, headers=HEADERS)
-      response = ur.urlopen(request).read()
-      page = response.decode("utf-8")
-      html = Soup(page, "html.parser")
-      rows = html.find_all("tr")
-      for row in rows:
-        blocks = row.find_all("td")
-        author = blocks[0].find(class_="at_member")["data-store"]
-        author_short = author[:]
-        if len(author) > 16:
-          author_short = author[:16] + "…"
-        author_url = blocks[0].find("a", class_="_hovertrigger")["href"]
-        date = [i for i in blocks[2].find("span", class_="right").strings][0] \
-                .strip()[1:-1]
-        date_arr = date.split(" ")
-        month = months[date_arr[1]]
-        date = date_arr[2] + "-" + month + "-" + date_arr[0] + " " + date_arr[4]
-        date_short = date_arr[4]
-        raw_msg = blocks[2].find("span", class_="shoutbox_text").p
-        
-        for tag in raw_msg.find_all("img"):
-          tag.replace_with(tag["alt"])
+      try:
+        response = ur.urlopen(request)
+      except:
+        self.lines = old_lines
+      else:
+        response = response.read()
+        page = response.decode("utf-8")
+        html = Soup(page, "html.parser")
+        rows = html.find_all("tr")
+        for row in rows:
+          blocks = row.find_all("td")
+          author = blocks[0].find(class_="at_member")["data-store"]
+          author_short = author[:]
+          if len(author) > 16:
+            author_short = author[:16] + "…"
+          author_url = blocks[0].find("a", class_="_hovertrigger")["href"]
+          date = [i for i in blocks[2].find("span", class_="right").strings][0] \
+                  .strip()[1:-1]
+          date_arr = date.split(" ")
+          month = months[date_arr[1]]
+          date = date_arr[2] + "-" + month + "-" + date_arr[0] + " " + date_arr[4]
+          date_short = date_arr[4]
+          raw_msg = blocks[2].find("span", class_="shoutbox_text").p
+          
+          for tag in raw_msg.find_all("img"):
+            tag.replace_with(tag["alt"])
 
-        for tag in raw_msg.find_all("a"):
-          tag.replace_with(lt + "a href=\"" + tag["href"] + "\" title=\"" + \
-            tag["title"] + "\"" + gt + tag.string + lt + "/a" + gt)
+          for tag in raw_msg.find_all("a"):
+            title = tag["title"]
+            if not title:
+              title = ""
+            tag.replace_with(lt + "a href=\"" + tag["href"] + "\" title=\"" + \
+              title + "\"" + gt + tag.text + lt + "/a" + gt)
 
-        for tag in raw_msg.find_all("strong"):
-          tag.replace_with(lt + "b" + gt + tag.string + lt + "/b" + gt)
+          for tag in raw_msg.find_all("strong"):
+            tag.replace_with(lt + "b" + gt + tag.text + lt + "/b" + gt)
 
-        for tag in raw_msg.find_all("em"):
-          tag.replace_with(lt + "i" + gt + tag.string + lt + "/i" + gt)
+          for tag in raw_msg.find_all("em"):
+            tag.replace_with(lt + "i" + gt + tag.text + lt + "/i" + gt)
 
-        for tag in raw_msg.find_all("span", style="color: black; " + \
-          "font-family: courier; background-color: #EAEAEA"):
-          tag.replace_with(lt + "span background=\"gray\" " + \
-            "foreground=\"white\"" + gt + tag.string + lt + "/span" + gt)
-  
-        msg = "".join([i for i in blocks[2] \
-                .find("span", class_="shoutbox_text").p.strings])
-        html_parser = HTMLParser()
-        msg = html_parser.unescape(msg)
-        msg = msg.replace("&", "&amp;")
-        msg = msg.replace("<", "&lt;")
-        msg = msg.replace(">", "&gt;")
-        msg = msg.replace(lt, "<")
-        msg = msg.replace(gt, ">")
-        self.lines.append({"author": author, "author_short": author_short,
-                           "url": author_url, "date": date,
-                           "date_short": date_short, "msg": msg})
-        self.user_links[author] = author_url
+          for tag in raw_msg.find_all("span", style="color: black; " + \
+            "font-family: courier; background-color: #EAEAEA"):
+            tag.replace_with(lt + "span background=\"gray\" " + \
+              "foreground=\"white\"" + gt + tag.text + lt + "/span" + gt)
+    
+          msg = "".join([i for i in blocks[2] \
+                  .find("span", class_="shoutbox_text").p.strings])
+          html_parser = HTMLParser()
+          msg = html_parser.unescape(msg)
+          msg = msg.replace("&", "&amp;")
+          msg = msg.replace("<", "&lt;")
+          msg = msg.replace(">", "&gt;")
+          msg = msg.replace(lt, "<")
+          msg = msg.replace(gt, ">")
+          self.lines.append({"author": author, "author_short": author_short,
+                             "url": author_url, "date": date,
+                             "date_short": date_short, "msg": msg})
+          self.user_links[author] = author_url
       request = ur.Request(URLONLINE, headers=HEADERS)
-      response = json.loads(ur.urlopen(request).read().decode("utf-8"))
-      for user in response["NAMES"]:
-        html = Soup(user, "html.parser")
-        member = None
-        member_code = html.find("span")
-        if member_code:
-          member_links = html.find("span").find_all("a")
-          for link in member_links:
-            test = None
-            try:
-              test = link["onclick"]
-            except:
-              pass
-            if not test:
-              member = link
-          member_url = member["href"]
-          member = member.string
-        else:
-          member = user
-        member_url = "http://computercraft.ru/"
-        self.online.append({"user": member, "url": member_url})
-        #self.user_links[member] = member_url
+      try:
+        response = json.loads(ur.urlopen(request).read().decode("utf-8"))
+      except:
+        self.online = old_online
+      else:
+        for user in response["NAMES"]:
+          html = Soup(user, "html.parser")
+          member = None
+          member_code = html.find("span")
+          if member_code:
+            member_links = html.find("span").find_all("a")
+            for link in member_links:
+              test = None
+              try:
+                test = link["onclick"]
+              except:
+                pass
+              if not test:
+                member = link
+            member_url = member["href"]
+            member = member.string
+          else:
+            member = user
+          member_url = "http://computercraft.ru/"
+          self.online.append({"user": member, "url": member_url})
+          #self.user_links[member] = member_url
 
       self.updating = False
 
@@ -468,7 +482,10 @@ class Chat(Gtk.Window):
     headers["Accept"] = "text/javascript, text/html, application/xml, " \
                         "text/xml, */*"
     headers["Cache-Control"] = "no-cache"
-    r = requests.post(URLSEND, headers=headers, data={"shout": post_data})
+    try:
+      r = requests.post(URLSEND, headers=headers, data={"shout": post_data})
+    except:
+      pass
     self.sending = False
 
 

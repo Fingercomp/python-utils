@@ -231,62 +231,76 @@ class Chat(Gtk.Window):
       return False
     if self.updating is False:
       self.updating = True
+      old_lines = copy.deepcopy(self.lines)
+      old_online = copy.deepcopy(self.online)
       self.lines = []
       self.online = []
-      request = requests.get(URLGET, headers=HEADERS)
-      response = json.loads(request.text)
-      html_parser = HTMLParser()
-      for line in reversed(response["Body"]["messages"]):
-        user_short = line["user"]["name"]
-        msg = line["text"]
-        if len(user_short) > 16:
-          user_short = user_short[:16] + "…"
-        for tag in tags2replace:
-          rp_text = tags2replace[tag]
-          msg = msg.replace("<" + tag + ">", lt + rp_text + gt) \
-            .replace("</" + tag + ">", lt + "/" + rp_text + gt)
-        html = Soup(msg, "html.parser")
-        for tag in html.find_all("span", class_="spoiler"):
-          cl = ""
-          style = ""
-          try:
-            cl = tag["class"][0]
-          except:
-            try:
-              style = tag["style"]
-            except:
-              pass
-          if cl == "spoiler":
-            tag.replace_with(lt + \
-              "span foreground=\"white\" background=\"black\"" + gt + \
-              "[" + tag.string + "]" + lt + "/span" + gt)
-          if style == "text-decoration: underline;":
-            tag.replace_with(lt + "u" + gt + tag.string + lt + "/u" + gt)
-          elif style == "text-decoration: line-through;":
-            tag.replace_with(lt + "s" + gt + tag.string + lt + "/s" + gt)
-          elif style == "text-decoration: overline;":
-            tag.replace_with(lt + "s" + gt + tag.string + lt + "/s" + gt)
-        msg = html_parser.unescape(str(html))
-        msg = msg.replace("<", "&lt;").replace(">", "&gt;")
-        msg = msg.replace(lt, "<").replace(gt, ">")
-        msg = msg.replace("&", "&amp;")
-        self.lines.append({"user": line["user"],
-                           "date": line["date"]["full"],
-                           "msg": msg,
-                           "user_short": user_short,
-                           "short": line["date"]["short"]})
-      request = requests.get(URLONLINE)
-      response = json.loads(request.text)
-      if response["Body"] is False:
-        self.online = []
+      try:
+        request = requests.get(URLGET, headers=HEADERS)
+      except:
+        self.lines = old_lines
       else:
-        self.online = response["Body"]
-      request = requests.get(URLUSER, headers=HEADERS)
-      response = json.loads(request.text)
-      if response["Body"] is False:
+        response = json.loads(request.text)
+        html_parser = HTMLParser()
+        for line in reversed(response["Body"]["messages"]):
+          user_short = line["user"]["name"]
+          msg = line["text"]
+          if len(user_short) > 16:
+            user_short = user_short[:16] + "…"
+          for tag in tags2replace:
+            rp_text = tags2replace[tag]
+            msg = msg.replace("<" + tag + ">", lt + rp_text + gt) \
+              .replace("</" + tag + ">", lt + "/" + rp_text + gt)
+          html = Soup(msg, "html.parser")
+          for tag in html.find_all("span", class_="spoiler"):
+            cl = ""
+            style = ""
+            try:
+              cl = tag["class"][0]
+            except:
+              try:
+                style = tag["style"]
+              except:
+                pass
+            if cl == "spoiler":
+              tag.replace_with(lt + \
+                "span foreground=\"white\" background=\"black\"" + gt + \
+                "[" + tag.string + "]" + lt + "/span" + gt)
+            if style == "text-decoration: underline;":
+              tag.replace_with(lt + "u" + gt + tag.string + lt + "/u" + gt)
+            elif style == "text-decoration: line-through;":
+              tag.replace_with(lt + "s" + gt + tag.string + lt + "/s" + gt)
+            elif style == "text-decoration: overline;":
+              tag.replace_with(lt + "s" + gt + tag.string + lt + "/s" + gt)
+          msg = html_parser.unescape(str(html))
+          msg = msg.replace("<", "&lt;").replace(">", "&gt;")
+          msg = msg.replace(lt, "<").replace(gt, ">")
+          msg = msg.replace("&", "&amp;")
+          self.lines.append({"user": line["user"],
+                             "date": line["date"]["full"],
+                             "msg": msg,
+                             "user_short": user_short,
+                             "short": line["date"]["short"]})
+      try:
+        request = requests.get(URLONLINE)
+      except:
+        self.online = old_online
+      else:
+        response = json.loads(request.text)
+        if response["Body"] is False:
+          self.online = []
+        else:
+          self.online = response["Body"]
+      try:
+        request = requests.get(URLUSER, headers=HEADERS)
+      except:
         self.logged = False
       else:
-        self.logged = response["Body"]
+        response = json.loads(request.text)
+        if response["Body"] is False:
+          self.logged = False
+        else:
+          self.logged = response["Body"]
 
       self.updating = False
 
@@ -413,7 +427,10 @@ class Chat(Gtk.Window):
     return True
 
   def send_msg_thread(self, msg):
-    r = requests.post(URLSEND, headers=HEADERS, data={"text": msg})
+    try:
+      r = requests.post(URLSEND, headers=HEADERS, data={"text": msg})
+    except:
+      pass
     self.sending = False
 
 

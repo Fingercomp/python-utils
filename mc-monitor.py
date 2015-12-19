@@ -70,9 +70,6 @@ VOTEFILE = config + "mc-monitor/vote"
 SERVERSFILE = config + "mc-monitor/mc-monitor.cfg"
 
 nots = True
-            print(tag)
-            print(tag)
-            print(tag)
 
 if os.name == "nt":
     # Windows, turn off notifications

@@ -183,6 +183,7 @@ class Chat(Gtk.Window):
     self.quitting = False
     self.logged = False
     self.hidden = False
+    self.first = True
 
     self.update_data()
     self.update_gui()
@@ -311,10 +312,6 @@ class Chat(Gtk.Window):
         prev = None
         for child in self.chat_box.get_children():
           child.destroy()
-        test = Gtk.Label("") # Kashdil!
-        test.set_selectable(True)
-        test.modify_font(Pango.FontDescription("sans 1"))
-        self.chat_box.add(test)
         for line in self.lines:
           label_date = Gtk.Label(line["short"])
           tooltip_date = DateTooltip(text=line["date"])
@@ -364,7 +361,6 @@ class Chat(Gtk.Window):
           label_msg.show()
           prev = label_date
         self.old_lines = copy.deepcopy(self.lines)
-        test.hide()
       for child in self.online_box.get_children():
         child.destroy()
       online_label = Gtk.Label()
@@ -393,6 +389,9 @@ class Chat(Gtk.Window):
       else:
         self.btn_send.set_sensitive(False)
         self.entry.hide()
+      if self.first:
+        self.entry.grab_focus()
+        self.first = False
     else:
       self.btn_upd.set_sensitive(False)
     return True

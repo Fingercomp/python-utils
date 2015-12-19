@@ -219,6 +219,7 @@ class Chat(Gtk.Window):
     self.user_links = {}
     self.updating = False
     self.quitting = False
+    self.first = True
 
     self.update_data()
     self.update_gui()
@@ -374,10 +375,6 @@ class Chat(Gtk.Window):
         prev = None
         for child in self.chat_box.get_children():
           child.destroy()
-        test = Gtk.Label("") # Kashdil!
-        test.set_selectable(True)
-        test.modify_font(Pango.FontDescription("sans 1"))
-        self.chat_box.add(test)
         for line in self.lines:
           label_user = Gtk.Label("@" + line["author_short"])
           tooltip_user = DateTooltip(text=line["author"])
@@ -436,6 +433,9 @@ class Chat(Gtk.Window):
         label.set_justify(Gtk.Justification.LEFT)
         self.online_box.add(label)
         label.show()
+      if self.first:
+        self.entry.grab_focus()
+        self.first = False
     else:
       self.btn_upd.set_sensitive(False)
     return True

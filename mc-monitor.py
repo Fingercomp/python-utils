@@ -70,6 +70,9 @@ VOTEFILE = config + "mc-monitor/vote"
 SERVERSFILE = config + "mc-monitor/mc-monitor.cfg"
 
 nots = True
+            print(tag)
+            print(tag)
+            print(tag)
 
 if os.name == "nt":
     # Windows, turn off notifications
@@ -202,7 +205,7 @@ class CheckServers:
         cur_time = dt.datetime.now()
         if cur_time >= vote_at:
             self.vote_item.set_sensitive(True)
-            self.ind.set_from_file("icons/mc-monitor-important.png")
+            self.ind.set_from_file(config + "icons/mc-monitor-important.png")
             self.vote_item.set_label("Restart the timer")
             if self.show_notification is False and nots is True:
                 self.show_notification = True

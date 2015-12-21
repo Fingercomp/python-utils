@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "2.0.0-pre3"
+VERSION = "2.0.0"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -77,6 +77,11 @@ URLSEND = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&" \
 URLONLINE = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&" \
             "section=coreAjax&secure_key=" + userdata[0] + "&type=getMembers" \
             "&global=1"
+URLUSER = "http://computercraft.ru/user/"
+URLTOPMONTH = "http://launcher.computercraft.ru/api/topmonth/100"
+URLTOPMONEY = "http://launcher.computercraft.ru/api/topmoney/100"
+URLTOPUU = "http://launcher.computercraft.ru/api/top/100"
+URLINFO = "http://launcher.computercraft.ru/api/info/"
 HEADERS = {
   "Host": "computercraft.ru",
   "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:42.0) " \
@@ -150,11 +155,230 @@ class DateTooltip(Gtk.Tooltip):
     return True
 
 
+class InfoWindow(Gtk.Window):
+  
+  def __init__(self, nickname = "Byte", *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.set_default_size(300, 480)
+    
+    self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+    self.main_box.set_homogeneous(False)
+
+    self.grid = Gtk.Grid(column_spacing=5, row_spacing=5, hexpand=True, vexpand=True)
+    self.grid.set_border_width(5)
+    self.grid.set_column_homogeneous(True)
+
+    self.add(self.main_box)
+    self.main_box.add(self.grid)
+
+    self.footer = Gtk.Grid(column_spacing=5, row_spacing=5, hexpand=True)
+    self.footer.set_border_width(5)
+    self.footer.set_column_homogeneous(True)
+    self.main_box.add(self.footer)
+
+
+
+    self.nick_label = Gtk.Label(nickname)
+    self.nick_label.modify_font(Pango.FontDescription("Bold 20"))
+    self.grid.attach(self.nick_label, 1, 1, 1, 1)
+
+    self.balance = Gtk.Label("$ 0")
+    self.balance.modify_font(Pango.FontDescription("Bold 14"))
+    self.grid.attach_next_to(self.balance, self.nick_label, Gtk.PositionType.RIGHT, 1, 1)
+
+    self.uu = Gtk.Label("UU 0")
+    self.uu.modify_font(Pango.FontDescription("Bold 14"))
+    self.grid.attach_next_to(self.uu, self.balance, Gtk.PositionType.RIGHT, 1, 1)
+
+
+    self.month_label = Gtk.Label("Month: #1")
+    self.grid.attach_next_to(self.month_label, self.nick_label, Gtk.PositionType.BOTTOM, 1, 1)
+
+    self.money_label = Gtk.Label("Money: #1")
+    self.grid.attach_next_to(self.money_label, self.month_label, Gtk.PositionType.RIGHT, 1, 1)
+
+    self.uu_label = Gtk.Label("UU: #1")
+    self.grid.attach_next_to(self.uu_label, self.money_label, Gtk.PositionType.RIGHT, 1, 1)
+
+
+    self.scrlwnd_month = Gtk.ScrolledWindow()
+    self.scrlwnd_month.set_vexpand(True)
+    self.scrlwnd_month.set_hexpand(True)
+    self.grid.attach_next_to(self.scrlwnd_month, self.month_label, Gtk.PositionType.BOTTOM, 1, 1)
+
+    self.scrlwnd_money = Gtk.ScrolledWindow()
+    self.scrlwnd_money.set_vexpand(True)
+    self.scrlwnd_money.set_hexpand(True)
+    self.grid.attach_next_to(self.scrlwnd_money, self.scrlwnd_month, Gtk.PositionType.RIGHT, 1, 1)
+
+    self.scrlwnd_uu = Gtk.ScrolledWindow()
+    self.scrlwnd_uu.set_vexpand(True)
+    self.scrlwnd_uu.set_hexpand(True)
+    self.grid.attach_next_to(self.scrlwnd_uu, self.scrlwnd_money, Gtk.PositionType.RIGHT, 1, 1)
+
+
+    self.month_list = Gtk.ListStore(str, str, str)
+    self.money_list = Gtk.ListStore(str, str, str)
+    self.uu_list = Gtk.ListStore(str, str, str, str)
+
+    self.month_tree = Gtk.TreeView.new_with_model(self.month_list)
+    for i, title in enumerate(["#", "User", "Votes"]):
+      renderer = Gtk.CellRendererText()
+      column = Gtk.TreeViewColumn(title, renderer, text=i)
+      self.month_tree.append_column(column)
+
+    self.money_tree = Gtk.TreeView.new_with_model(self.money_list)
+    for i, title in enumerate(["#", "User", "Money"]):
+      renderer = Gtk.CellRendererText()
+      column = Gtk.TreeViewColumn(title, renderer, text=i)
+      self.money_tree.append_column(column)
+
+    self.uu_tree = Gtk.TreeView.new_with_model(self.uu_list)
+    for i, title in enumerate(["#", "User", "Money", "UU"]):
+      renderer = Gtk.CellRendererText()
+      column = Gtk.TreeViewColumn(title, renderer, text=i)
+      self.uu_tree.append_column(column)
+
+    self.scrlwnd_month.add(self.month_tree)
+    self.scrlwnd_money.add(self.money_tree)
+    self.scrlwnd_uu.add(self.uu_tree)
+
+
+    self.votes_label = Gtk.Label()
+    self.votes_label.set_markup("<b><i>VOTES</i></b>")
+    self.votes_label.set_justify(Gtk.Justification.LEFT)
+    self.votes_label.set_xalign(0)
+    self.footer.attach(self.votes_label, 1, 1, 1, 1)
+
+    self.mcrate = Gtk.Label()
+    self.mcrate.set_markup("<b>MCRate</b>: 0")
+    self.footer.attach_next_to(self.mcrate, self.votes_label, Gtk.PositionType.RIGHT, 1, 1)
+
+    self.topcraft = Gtk.Label()
+    self.topcraft.set_markup("<b>TopCraft</b>: 0")
+    self.footer.attach_next_to(self.topcraft, self.mcrate, Gtk.PositionType.RIGHT, 1, 1)
+
+    self.monitor = Gtk.Label()
+    self.monitor.set_markup("<b>MonitorMC</b>: 0")
+    self.footer.attach_next_to(self.monitor, self.topcraft, Gtk.PositionType.RIGHT, 1, 1)
+
+    self.show_all()
+
+    self.connect("delete-event", self.hide_on_delete_handler)
+    
+    self.shown = False
+    self.quitting = False
+    self.updating = False
+    self.nickname = nickname
+    self.old_top_month = []
+    self.old_top_money = []
+    self.old_top_uu = []
+    self.old_account = {}
+    self.top_month = []
+    self.top_money = []
+    self.top_uu = []
+    self.account = {"money": 0, "uu": 0, "votes": {"rate": 0, "top": 0, "mon": 0}, "tops": {"month": 1, "money": 1, "uu": 1}}
+
+    self.update_data()
+    self.update_gui()
+
+    self.timer_upd = RepeatedTimer(30, self.update_data)
+    GLib.timeout_add(1000, self.update_gui)
+
+  def quit_handler(self, *args):
+    self.quitting = True
+    while self.updating:
+      time.sleep(.05)
+    self.timer_upd.cancel()
+    self.destroy()
+
+  def hide_on_delete_handler(self, *args):
+    self.hide_on_delete()
+    self.shown = False
+    return True
+
+  def update_data(self, *args):
+    if self.quitting:
+      return False
+    self.updating = True
+    self.top_month = []
+    self.top_money = []
+    self.top_uu = []
+    user_tops = {"month": 1, "money": 1, "uu": 1}
+    response = requests.get(URLTOPMONTH)
+    top_month = json.loads(response.text)
+    for i, val in enumerate(top_month):
+      i += 1
+      if val["user"] == self.nickname.lower():
+        user_tops["month"] = str(i)
+      self.top_month.append({"num": "#" + str(i), "user": val["user"], "votes": val["voices"]})
+
+    response = requests.get(URLTOPMONEY)
+    top_money = json.loads(response.text)
+    for i, val in enumerate(top_money):
+      i += 1
+      if val["name"] == self.nickname.lower():
+        user_tops["money"] = str(i)
+      self.top_money.append({"num": "#" + str(i), "user": val["name"], "money": val["money"]})
+
+    response = requests.get(URLTOPUU)
+    top_uu = json.loads(response.text)
+    for i, val in enumerate(top_uu):
+      i += 1
+      if val["name"] == self.nickname.lower():
+        user_tops["uu"] = str(i)
+      self.top_uu.append({"num": "#" + str(i), "user": val["name"], "votes": val["uu"], "money": val["money"]})
+
+    response = requests.get(URLINFO + self.nickname)
+    info = json.loads(response.text)[0]
+    self.account = {"money": info["money"], "uu": info["uu"], "votes": {"rate": info["votes_mcrate"], "top": info["votes_top"], "mon": info["votes_monit"]}, "tops": user_tops}
+    self.updating = False
+
+  def update_gui(self, *args):
+    if self.updating:
+      return True
+    
+    if self.old_top_month != self.top_month:
+      self.month_list.clear()
+      for i in self.top_month:
+        self.month_list.append([i["num"], i["user"], i["votes"]])
+
+    if self.old_top_money != self.top_money:
+      self.money_list.clear()
+      for i in self.top_money:
+        self.money_list.append([i["num"], i["user"], i["money"]])
+
+    if self.old_top_uu != self.top_uu:
+      self.uu_list.clear()
+      for i in self.top_uu:
+        self.uu_list.append([i["num"], i["user"], i["money"], i["votes"]])
+
+    if self.old_account != self.account:
+      self.balance.set_text("$ " + self.account["money"])
+      self.uu.set_text("UU " + self.account["uu"])
+  
+      self.mcrate.set_markup("<b>MCRate</b>: " + self.account["votes"]["rate"])
+      self.topcraft.set_markup("<b>TopCraft</b>: " + self.account["votes"]["top"])
+      self.monitor.set_markup("<b>MonitorMC</b>: " + self.account["votes"]["mon"])
+  
+      self.month_label.set_text("Month: #" + self.account["tops"]["month"])
+      self.money_label.set_text("Money: #" + self.account["tops"]["money"])
+      self.uu_label.set_text("UU: #" + self.account["tops"]["uu"])
+
+    self.old_top_month = copy.deepcopy(self.top_month)
+    self.old_top_money = copy.deepcopy(self.top_money)
+    self.old_top_uu = copy.deepcopy(self.top_uu)
+    self.old_account = copy.deepcopy(self.account)
+
+    return True
+
+
 class Chat(Gtk.Window):
   
   def __init__(self):
     super().__init__(title="CC.ru chat client [" + VERSION + "]")
-    self.set_default_size(500, 200)
+    self.set_default_size(600, 500)
+    self.set_default_icon_from_file(config + "icons/cc-chat-icon.png")
 
     self.timeout_id = None
 
@@ -170,7 +394,7 @@ class Chat(Gtk.Window):
     self.scrlwnd.set_vexpand(True)
     self.scrlwnd.set_hexpand(True)
     frame_chat.add(self.scrlwnd)
-    grid.attach(frame_chat, 1, 1, 8, 10)
+    grid.attach(frame_chat, 1, 1, 8, 12)
 
     self.chat_box = Gtk.Grid(row_spacing=10)
     self.scrlwnd.add(self.chat_box)
@@ -185,7 +409,7 @@ class Chat(Gtk.Window):
     self.scrlwnd_online.set_hexpand(False)
     frame_online.add(self.scrlwnd_online)
     grid.attach_next_to(frame_online, frame_chat,
-                        Gtk.PositionType.RIGHT, 2, 10)
+                        Gtk.PositionType.RIGHT, 2, 11)
 
     self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
     self.scrlwnd_online.add(self.online_box)
@@ -207,10 +431,19 @@ class Chat(Gtk.Window):
     self.btn_upd.connect("clicked", self.bh_update)
     grid.attach_next_to(self.btn_upd, self.btn_send,
                         Gtk.PositionType.RIGHT, 1, 1)
-    
+
+    self.btn_info = Gtk.Button(label="ⓘ")
+    self.btn_info.connect("clicked", self.toggle_info_win)
+    grid.attach_next_to(self.btn_info, frame_online, Gtk.PositionType.BOTTOM, 2, 1)
+
     self.ind = Gtk.StatusIcon.new()
     self.ind.set_from_file(config + "icons/cc-chat-icon.png")
     self.ind.connect("activate", self.toggle_visibility)
+
+    self.show_all()
+
+    self.info_win = InfoWindow(nickname = self.get_cur_user())
+    self.info_win.set_visible(False)
 
     self.hidden = False
     self.lines = []
@@ -227,10 +460,15 @@ class Chat(Gtk.Window):
     self.timer_upd = RepeatedTimer(DELAY, self.update_data)
     GLib.timeout_add(1000, self.update_gui)
 
+  def toggle_info_win(self, *args):
+     self.info_win.set_visible(not self.info_win.shown)
+     self.info_win.shown = not self.info_win.shown
+
   def toggle_visibility(self, widget):
     if self.hidden:
       root.release()
       self.set_visible(True)
+      self.entry.grab_focus()
     else:
       root.hold()
       self.set_visible(False)
@@ -268,6 +506,7 @@ class Chat(Gtk.Window):
     while self.updating is True:
       time.sleep(0.05)
     self.timer_upd.cancel()
+    self.info_win.quit_handler()
     Gtk.main_quit()
 
   def update_data(self, widget=None):
@@ -488,10 +727,26 @@ class Chat(Gtk.Window):
       pass
     self.sending = False
 
+  def get_user(self, uid):
+    response = requests.get(URLUSER + uid + "-getuser", headers=HEADERS)
+    html = Soup(response.text)
+    title = html.find("title").string
+    if title.split(" ")[0] == "Ошибка":
+      return ""
+    return response.url.split("-")[1].replace("/", "")
+
+  def get_cur_user(self):
+    options_list = [i.strip() for i in HEADERS["Cookie"].split(";")]
+    options = {}
+    for i in options_list:
+      options[i.split("=")[0]] = "=".join(i.split("=")[1:])
+
+    uid = options["member_id"]
+    return self.get_user(uid)
+
 
 win = Chat()
 win.connect("delete-event", win.bh_quit)
-win.show_all()
 Gtk.main()
 
 # vim: set autoindent tabstop=2 shiftwidth=2 expandtab:

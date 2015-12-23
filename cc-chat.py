@@ -219,7 +219,7 @@ class InfoWindow(Gtk.Window):
 
     self.month_list = Gtk.ListStore(str, str, str)
     self.money_list = Gtk.ListStore(str, str, str)
-    self.uu_list = Gtk.ListStore(str, str, str, str)
+    self.uu_list = Gtk.ListStore(str, str, str, str, str)
 
     self.month_tree = Gtk.TreeView.new_with_model(self.month_list)
     for i, title in enumerate(["#", "User", "Votes"]):
@@ -234,7 +234,7 @@ class InfoWindow(Gtk.Window):
       self.money_tree.append_column(column)
 
     self.uu_tree = Gtk.TreeView.new_with_model(self.uu_list)
-    for i, title in enumerate(["#", "User", "Money", "UU"]):
+    for i, title in enumerate(["#", "User", "Votes", "Money", "UU"]):
       renderer = Gtk.CellRendererText()
       column = Gtk.TreeViewColumn(title, renderer, text=i)
       self.uu_tree.append_column(column)
@@ -305,39 +305,51 @@ class InfoWindow(Gtk.Window):
     self.top_money = []
     self.top_uu = []
     user_tops = {"month": 1, "money": 1, "uu": 1}
-    response = requests.get(URLTOPMONTH)
-    top_month = json.loads(response.text)
-    for i, val in enumerate(top_month):
-      i += 1
-      if val["user"] == self.nickname.lower():
-        user_tops["month"] = str(i)
-      self.top_month.append({"num": "#" + str(i), "user": val["user"], "votes": val["voices"]})
+    try:
+      response = requests.get(URLTOPMONTH)
+      top_month = json.loads(response.text)
+      for i, val in enumerate(top_month):
+        i += 1
+        if val["user"] == self.nickname.lower():
+          user_tops["month"] = str(i)
+        self.top_month.append({"num": str(i), "user": val["user"], "votes": val["voices"]})
+    except:
+      self.top_month = self.old_top_month
+    
+    try:
+      response = requests.get(URLTOPMONEY)
+      top_money = json.loads(response.text)
+      for i, val in enumerate(top_money):
+        i += 1
+        if val["name"] == self.nickname.lower():
+          user_tops["money"] = str(i)
+        self.top_money.append({"num": str(i), "user": str(val["name"]), "money": str(val["money"])})
+    except:
+      self.top_money = self.old_top_money
 
-    response = requests.get(URLTOPMONEY)
-    top_money = json.loads(response.text)
-    for i, val in enumerate(top_money):
-      i += 1
-      if val["name"] == self.nickname.lower():
-        user_tops["money"] = str(i)
-      self.top_money.append({"num": "#" + str(i), "user": val["name"], "money": val["money"]})
+    try:
+      response = requests.get(URLTOPUU)
+      top_uu = json.loads(response.text)
+      for i, val in enumerate(top_uu):
+        i += 1
+        if val["name"] == self.nickname.lower():
+          user_tops["uu"] = str(i)
+        self.top_uu.append({"num": str(i), "user": str(val["name"]), "votes": str(val["voices"]), "uu": str(val["uu"]), "money": str(val["money"])})
+    except:
+      self.top_uu = self.old_top_uu
 
-    response = requests.get(URLTOPUU)
-    top_uu = json.loads(response.text)
-    for i, val in enumerate(top_uu):
-      i += 1
-      if val["name"] == self.nickname.lower():
-        user_tops["uu"] = str(i)
-      self.top_uu.append({"num": "#" + str(i), "user": val["name"], "votes": val["uu"], "money": val["money"]})
-
-    response = requests.get(URLINFO + self.nickname)
-    info = json.loads(response.text)[0]
-    self.account = {"money": info["money"], "uu": info["uu"], "votes": {"rate": info["votes_mcrate"], "top": info["votes_top"], "mon": info["votes_monit"]}, "tops": user_tops}
+    try:
+      response = requests.get(URLINFO + self.nickname)
+      info = json.loads(response.text)[0]
+      self.account = {"money": str(info["money"]), "uu": str(info["uu"]), "votes": {"rate": str(info["votes_mcrate"]), "top": str(info["votes_top"]), "mon": str(info["votes_monit"])}, "tops": user_tops}
+    except:
+      self.account = self.old_account
     self.updating = False
 
   def update_gui(self, *args):
     if self.updating:
       return True
-    
+
     if self.old_top_month != self.top_month:
       self.month_list.clear()
       for i in self.top_month:
@@ -351,7 +363,7 @@ class InfoWindow(Gtk.Window):
     if self.old_top_uu != self.top_uu:
       self.uu_list.clear()
       for i in self.top_uu:
-        self.uu_list.append([i["num"], i["user"], i["money"], i["votes"]])
+        self.uu_list.append([i["num"], i["user"], i["votes"], i["money"], i["uu"]])
 
     if self.old_account != self.account:
       self.balance.set_text("$ " + self.account["money"])
@@ -361,9 +373,9 @@ class InfoWindow(Gtk.Window):
       self.topcraft.set_markup("<b>TopCraft</b>: " + self.account["votes"]["top"])
       self.monitor.set_markup("<b>MonitorMC</b>: " + self.account["votes"]["mon"])
   
-      self.month_label.set_text("Month: #" + self.account["tops"]["month"])
-      self.money_label.set_text("Money: #" + self.account["tops"]["money"])
-      self.uu_label.set_text("UU: #" + self.account["tops"]["uu"])
+      self.month_label.set_text("Month: #" + str(self.account["tops"]["month"]))
+      self.money_label.set_text("Money: #" + str(self.account["tops"]["money"]))
+      self.uu_label.set_text("UU: #" + str(self.account["tops"]["uu"]))
 
     self.old_top_month = copy.deepcopy(self.top_month)
     self.old_top_money = copy.deepcopy(self.top_money)

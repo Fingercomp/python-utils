@@ -554,7 +554,7 @@ class Chat(Gtk.Window):
           date = date_arr[2] + "-" + month + "-" + date_arr[0] + " " + date_arr[4]
           date_short = date_arr[4]
           raw_msg = blocks[2].find("span", class_="shoutbox_text").p
-          
+
           for tag in raw_msg.find_all("img"):
             tag.replace_with(tag["alt"])
 
@@ -575,6 +575,9 @@ class Chat(Gtk.Window):
             "font-family: courier; background-color: #EAEAEA"):
             tag.replace_with(lt + "span background=\"gray\" " + \
               "foreground=\"white\"" + gt + tag.text + lt + "/span" + gt)
+
+          for tag in raw_msg.find_all("del"):
+            tag.replace_with(lt + "s" + gt + tag.text + lt + "/s" + gt)
     
           msg = "".join([i for i in blocks[2] \
                   .find("span", class_="shoutbox_text").p.strings])

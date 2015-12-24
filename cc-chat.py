@@ -239,6 +239,10 @@ class InfoWindow(Gtk.Window):
       column = Gtk.TreeViewColumn(title, renderer, text=i)
       self.uu_tree.append_column(column)
 
+    self.month_tree.set_grid_lines(Gtk.TreeViewGridLines.VERTICAL)
+    self.money_tree.set_grid_lines(Gtk.TreeViewGridLines.VERTICAL)
+    self.uu_tree.set_grid_lines(Gtk.TreeViewGridLines.VERTICAL)
+
     self.scrlwnd_month.add(self.month_tree)
     self.scrlwnd_money.add(self.money_tree)
     self.scrlwnd_uu.add(self.uu_tree)
@@ -377,6 +381,10 @@ class InfoWindow(Gtk.Window):
       self.money_label.set_text("Money: #" + str(self.account["tops"]["money"]))
       self.uu_label.set_text("UU: #" + str(self.account["tops"]["uu"]))
 
+      self.month_tree.set_cursor(int(self.account["tops"]["month"]) - 1)
+      self.money_tree.set_cursor(int(self.account["tops"]["money"]) - 1)
+      self.uu_tree.set_cursor(int(self.account["tops"]["uu"]) - 1)
+
     self.old_top_month = copy.deepcopy(self.top_month)
     self.old_top_money = copy.deepcopy(self.top_money)
     self.old_top_uu = copy.deepcopy(self.top_uu)
@@ -454,7 +462,7 @@ class Chat(Gtk.Window):
 
     self.show_all()
 
-    self.info_win = InfoWindow(nickname = self.get_cur_user())
+    self.info_win = InfoWindow(nickname = self.get_cur_user(), title="CC.ru Tops & Balance")
     self.info_win.set_visible(False)
 
     self.hidden = False
@@ -481,9 +489,11 @@ class Chat(Gtk.Window):
       root.release()
       self.set_visible(True)
       self.entry.grab_focus()
+      self.info_win.set_visible(self.info_win.shown)
     else:
       root.hold()
       self.set_visible(False)
+      self.info_win.set_visible(False)
     self.hidden = not self.hidden
     return True
 

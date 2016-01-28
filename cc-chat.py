@@ -17,6 +17,7 @@ import requests
 import time
 import json
 from html.parser import HTMLParser
+import re
 
 GLib.threads_init()
 
@@ -82,6 +83,8 @@ URLTOPMONTH = "http://launcher.computercraft.ru/api/topmonth/100"
 URLTOPMONEY = "http://launcher.computercraft.ru/api/topmoney/100"
 URLTOPUU = "http://launcher.computercraft.ru/api/top/100"
 URLINFO = "http://launcher.computercraft.ru/api/info/"
+URLEDIT = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&section=coreAjax&secure_key=" + userdata[0] + "&type=mod&action=performCommand&command=edit&modtype=shout"
+URLDELETE = "http://computercraft.ru/index.php?s=6089d39c1901938ea80333ceb8a7cac5&&app=shoutbox&module=ajax&section=coreAjax&secure_key=" + userdata[0] + "&type=mod&action=performCommand&command=delete&modtype=shout&id="
 HEADERS = {
   "Host": "computercraft.ru",
   "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:42.0) " \
@@ -393,6 +396,14 @@ class InfoWindow(Gtk.Window):
     return True
 
 
+class MsgLabel(Gtk.Label):
+  
+  def __init__(self, data, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.data = data
+
+
+
 class Chat(Gtk.Window):
   
   def __init__(self):
@@ -438,13 +449,30 @@ class Chat(Gtk.Window):
 
     self.scrlwnd_online.set_size_request(100, -1)
 
+    self.btn_del_cancel = Gtk.Button(label="Cancel")
+    self.btn_del_cancel.connect("clicked", self.delete_abort)
+    grid.attach_next_to(self.btn_del_cancel, frame_chat, Gtk.PositionType.BOTTOM, 7, 1)
+
+    self.btn_del_ok = Gtk.Button(label="OK")
+    self.btn_del_ok.connect("clicked", self.delete_confirm)
+    grid.attach_next_to(self.btn_del_ok, self.btn_del_cancel, Gtk.PositionType.RIGHT, 1, 1)
+
     self.entry = Gtk.Entry()
     self.entry.connect("activate", self.send_msg)
     grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 8, 1)
 
+    self.edit_entry = Gtk.Entry()
+    self.edit_entry.connect("activate", self.process_edit)
+    grid.attach_next_to(self.edit_entry, frame_chat, Gtk.PositionType.BOTTOM, 8, 1)
+
     self.btn_send = Gtk.Button(label=">")
     self.btn_send.connect("clicked", self.send_msg)
     grid.attach_next_to(self.btn_send, self.entry,
+                        Gtk.PositionType.RIGHT, 1, 1)
+
+    self.btn_edit = Gtk.Button(label=">")
+    self.btn_edit.connect("clicked", self.process_edit)
+    grid.attach_next_to(self.btn_edit, self.entry,
                         Gtk.PositionType.RIGHT, 1, 1)
 
     self.btn_upd = Gtk.Button(label="↻")
@@ -461,6 +489,10 @@ class Chat(Gtk.Window):
     self.ind.connect("activate", self.toggle_visibility)
 
     self.show_all()
+    self.edit_entry.hide()
+    self.btn_edit.hide()
+    self.btn_del_cancel.hide()
+    self.btn_del_ok.hide()
 
     self.info_win = InfoWindow(nickname = self.get_cur_user(), title="CC.ru Tops & Balance")
     self.info_win.set_visible(False)
@@ -473,6 +505,8 @@ class Chat(Gtk.Window):
     self.updating = False
     self.quitting = False
     self.first = True
+    self.edit_msg = False
+    self.proceed_delete = 0
 
     self.update_data()
     self.update_gui()
@@ -523,6 +557,21 @@ class Chat(Gtk.Window):
           Gtk.show_uri(None, link, Gdk.CURRENT_TIME)
     return True
 
+  def msg_edit(self, widget, event):
+    if event.button == 1:
+      if event.state & Gdk.ModifierType.CONTROL_MASK == \
+          Gdk.ModifierType.CONTROL_MASK and self.proceed_delete == 0:
+        data = widget.data
+        if data["editable"]:
+          self.edit_shout_user_interface(data["id"], data["msg"])
+          return True
+      elif event.state & Gdk.ModifierType.MOD1_MASK == \
+          Gdk.ModifierType.MOD1_MASK:
+        data = widget.data
+        if data["mod"]:
+          self.delete_shout_step1(data["id"])
+          return True
+
   def bh_quit(self, widget=None, *args):
     self.quitting = True
     while self.updating is True:
@@ -557,6 +606,16 @@ class Chat(Gtk.Window):
           if len(author) > 16:
             author_short = author[:16] + "…"
           author_url = blocks[0].find("a", class_="_hovertrigger")["href"]
+          is_editable = False
+          are_mod_avail = False
+          shout_id = 1
+          right_span = blocks[2].find("span", class_="right").find_all("a")
+          for tag in right_span:
+            if re.match("return ipb.shoutbox.editShout\\(\\d+?\\)", tag["onclick"]):
+              is_editable = True
+              shout_id = int(re.match("return ipb.shoutbox.editShout\\((\\d+?)\\)", tag["onclick"]).groups()[0])
+            if re.match("return ipb.shoutbox.modOptsLoadShout\\(\\d+?\\)", tag["onclick"]):
+              are_mod_avail = True
           date = [i for i in blocks[2].find("span", class_="right").strings][0] \
                   .strip()[1:-1]
           date_arr = date.split(" ")
@@ -600,7 +659,9 @@ class Chat(Gtk.Window):
           msg = msg.replace(gt, ">")
           self.lines.append({"author": author, "author_short": author_short,
                              "url": author_url, "date": date,
-                             "date_short": date_short, "msg": msg})
+                             "date_short": date_short, "msg": msg,
+                             "editable": is_editable, "mod": are_mod_avail,
+                             "id": shout_id})
           self.user_links[author] = author_url
       request = ur.Request(URLONLINE, headers=HEADERS)
       try:
@@ -645,8 +706,9 @@ class Chat(Gtk.Window):
           label_user.set_has_tooltip(True)
           label_user.connect("query-tooltip", tooltip_user)
           label_user.connect("button-press-event", self.paste_nick)
-          label_msg = Gtk.Label()
+          label_msg = MsgLabel(line)
           label_msg.set_markup(line["msg"])
+          label_msg.connect("button-press-event", self.msg_edit)
           label_date = Gtk.Label(line["date_short"])
           tooltip_date = DateTooltip(text=line["date"])
           label_date.set_has_tooltip(True)
@@ -769,7 +831,89 @@ class Chat(Gtk.Window):
     uid = options["member_id"]
     return self.get_user(uid)
 
+  def edit_shout_user_interface(self, shout, prev_msg):
+    self.entry.hide()
+    self.btn_send.hide()
+    self.btn_edit.show()
+    self.edit_entry.show()
+    self.edit_entry.set_text(prev_msg)
+    self.edit_entry.grab_focus_without_selecting()
+    self.edit_msg = False
+    self.timeout_check_typed_text = GObject.timeout_add(500, self.check_typed_text, shout)
 
+  def check_typed_text(self, shout, *args):
+    if self.edit_msg != False:
+      self.edit_thread = Thread(target=self.edit_msg_post, args=(shout, self.edit_msg,))
+      self.edit_thread.start()
+      self.timeout_check_edited = GObject.timeout_add(500, self.check_edited)
+      return False
+    return True
+  
+  def process_edit(self, widget, *args):
+    self.edit_msg = self.edit_entry.get_text()
+    return True
+
+  def edit_msg_post(self, shout, msg):
+    post_data = parse.quote("<p>" + msg + "</p>", safe="")
+    try:
+      r = requests.post(URLEDIT, headers=HEADERS, data={"id": str(shout), "shout": post_data})
+    except:
+      pass
+    self.edit_msg = False
+
+  def check_edited(self, *args):
+    if self.edit_msg == False:
+      self.edit_entry.hide()
+      self.entry.show()
+      self.btn_edit.hide()
+      self.btn_send.show()
+      self.bh_update()
+      self.update_gui()
+      return False
+    return True
+
+  def delete_shout_step1(self, shout, *args):
+    self.entry.hide()
+    self.btn_send.set_sensitive(False)
+    self.btn_del_cancel.show()
+    self.btn_del_ok.show()
+    self.timeout_check_delete_step2 = GObject.timeout_add(500, self.check_delete_step2, shout)
+
+  def delete_abort(self, *args):
+    self.proceed_delete = -1
+
+  def delete_confirm(self, *args):
+    self.proceed_delete = 1
+
+  def check_delete_step2(self, shout, *args):
+    if self.proceed_delete != 0:
+      if self.proceed_delete == 1:
+        self.thread_delete_shout = Thread(target=self.delete_shout, args=(shout,))
+        self.thread_delete_shout.start()
+      else:
+        self.proceed_delete = 0
+      self.timeout_check_delete = GObject.timeout_add(500, self.check_delete)
+      self.btn_del_cancel.hide()
+      self.btn_del_ok.hide()
+      return False
+    return True
+
+  def check_delete(self, *args):
+    if self.proceed_delete == 0:
+      self.entry.show()
+      self.btn_send.set_sensitive(True)
+      self.bh_update()
+      self.update_gui()
+      return False
+    return True
+
+  def delete_shout(self, shout, *args):
+    try:
+      r = requests.get(URLDELETE + str(shout), headers=HEADERS)
+    except:
+      pass
+    self.proceed_delete = 0
+    
 win = Chat()
 win.connect("delete-event", win.bh_quit)
 Gtk.main()

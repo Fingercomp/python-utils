@@ -53,9 +53,7 @@ if not os.path.exists(config + "icons/ffgs-chat-icon.png"):
   f.write(img)
   f.close()
 
-userdata = [i.strip() for i in open(
-              os.path.expanduser("~") + \
-              "/.config/ffgs-chat.cfg").readlines()]
+userdata = [i.strip() for i in open(config + "ffgs-chat.cfg").readlines()]
 
 DELAY = 10
 URLGET = "http://ffgs.ru/chat/getmsg?id=1"
@@ -63,7 +61,7 @@ URLSEND = "http://ffgs.ru/chat/say"
 URLONLINE = "http://ffgs.ru/chat/getonline"
 URLUSER = "http://ffgs.ru/chat/getuser"
 HEADERS = {
-  "Cookie": "PHPSESSID=" + userdata[0]
+  "Cookie": "auth_user=" + userdata[0] + "; auth_hash=" + userdata[1]
 }
 
 lt = "\uf8f0"

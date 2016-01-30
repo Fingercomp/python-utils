@@ -16,7 +16,6 @@ mappings = {}
 
 for line in mappingsfile:
     values = line.split(",")
-    print(values[0] + "\t= " + values[1])
     mappings[values[0]] = values[1]
 
 if not sources == output:
@@ -37,9 +36,7 @@ for root, dirs, files in os.walk(output):
             content = f.read()
             f.close()
             for mapping in mappings:
-                print(mapping + "\t→  " + mappings[mapping])
                 content = content.replace(mapping, mappings[mapping])
-            print(content)
             f = open(os.path.join(root, name), "w")
             f.write(content)
             f.close()

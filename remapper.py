@@ -32,14 +32,17 @@ for root, dirs, files in os.walk(output):
             if name[-len(sys.argv[4]):] != sys.argv[4]:
                 skip = True
         if not skip:
-            f = open(os.path.join(root, name), "r")
-            content = f.read()
-            f.close()
-            for mapping in mappings:
-                content = content.replace(mapping, mappings[mapping])
-            f = open(os.path.join(root, name), "w")
-            f.write(content)
-            f.close()
+            try:
+                f = open(os.path.join(root, name), "r")
+                content = f.read()
+                f.close()
+                for mapping in mappings:
+                    content = content.replace(mapping, mappings[mapping])
+                f = open(os.path.join(root, name), "w")
+                f.write(content)
+                f.close()
+            except:
+                pass
 
 
 # vim: autoindent tabstop=4 shiftwidth=4 expandtab:

@@ -19,10 +19,6 @@ for line in mappingsfile:
     print(values[0] + "\t= " + values[1])
     mappings[values[0]] = values[1]
 
-if os.path.exists(output):
-    print("Output directory already exists!")
-    sys.exit(1)
-
 if not sources == output:
     shutil.copytree(sources, output)
 

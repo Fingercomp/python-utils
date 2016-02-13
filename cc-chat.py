@@ -815,12 +815,15 @@ class Chat(Gtk.Window):
     self.sending = False
 
   def get_user(self, uid):
-    response = requests.get(URLUSER + uid + "-getuser", headers=HEADERS)
-    html = Soup(response.text)
-    title = html.find("title").string
-    if title.split(" ")[0] == "Ошибка":
+    try:
+      response = requests.get(URLUSER + uid + "-getuser", headers=HEADERS)
+      html = Soup(response.text)
+      title = html.find("title").string
+      if title.split(" ")[0] == "Ошибка":
+        return ""
+      return response.url.split("-")[1].replace("/", "")
+    except:
       return ""
-    return response.url.split("-")[1].replace("/", "")
 
   def get_cur_user(self):
     options_list = [i.strip() for i in HEADERS["Cookie"].split(";")]

@@ -99,18 +99,42 @@ HEADERS = {
 }
 
 months = {
-  "Январь": "01",
-  "Февраль": "02",
-  "Март": "03",
-  "Апрель": "04",
-  "Май": "05",
-  "Июнь": "06",
-  "Июль": "07",
-  "Август": "08",
-  "Сентябрь": "09",
-  "Октябрь": "10",
-  "Ноябрь": "11",
-  "Декабрь": "12"
+  "январь": "01",
+  "февраль": "02",
+  "март": "03",
+  "апрель": "04",
+  "май": "05",
+  "июнь": "06",
+  "июль": "07",
+  "август": "08",
+  "сентябрь": "09",
+  "октябрь": "10",
+  "ноябрь": "11",
+  "декабрь": "12",
+  "january": "01",
+  "february": "02",
+  "march": "03",
+  "april": "04",
+  "may": "05",
+  "june": "06",
+  "jule": "07",
+  "august": "08",
+  "september": "09",
+  "october": "10",
+  "november": "11",
+  "december": "12",
+  "jan": "01",
+  "feb": "02",
+  "mar": "03",
+  "apr": "04",
+  "may": "05",
+  "jun": "06",
+  "jul": "07",
+  "aug": "08",
+  "sep": "09",
+  "oct": "10",
+  "nov": "11",
+  "dec": "12"
 }
 
 lt = "\uf8f0"
@@ -619,7 +643,7 @@ class Chat(Gtk.Window):
           date = [i for i in blocks[2].find("span", class_="right").strings][0] \
                   .strip()[1:-1]
           date_arr = date.split(" ")
-          month = months[date_arr[1]]
+          month = months[date_arr[1].lower()]
           date = date_arr[2] + "-" + month + "-" + date_arr[0] + " " + date_arr[4]
           date_short = date_arr[4]
           raw_msg = blocks[2].find("span", class_="shoutbox_text").p

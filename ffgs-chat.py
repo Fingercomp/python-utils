@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "2.0.0-pre3"
+VERSION = "2.1.0"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -60,6 +60,8 @@ URLGET = "http://ffgs.ru/chat/getmsg?id=1"
 URLSEND = "http://ffgs.ru/chat/say"
 URLONLINE = "http://ffgs.ru/chat/getonline"
 URLUSER = "http://ffgs.ru/chat/getuser"
+URLGETKILLERS = "http://api.ffgs.ru/rust/?action=getKillers"
+URLGETVICTIMS = "http://api.ffgs.ru/rust/?action=getVictims"
 HEADERS = {
     "Cookie": "auth_user=" + userdata[0] + "; auth_hash=" + userdata[1]
 }
@@ -113,6 +115,128 @@ class DateTooltip(Gtk.Tooltip):
         return True
 
 
+class RustWindow(Gtk.Window):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.set_default_size(300, 400)
+
+        self.box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        self.box.set_homogeneous(True)
+
+        self.add(self.box)
+
+        self.scrlwnd_killers = Gtk.ScrolledWindow()
+        self.scrlwnd_killers.set_vexpand(True)
+        self.scrlwnd_killers.set_hexpand(True)
+        self.box.add(self.scrlwnd_killers)
+
+        self.scrlwnd_victims = Gtk.ScrolledWindow()
+        self.scrlwnd_victims.set_vexpand(True)
+        self.scrlwnd_victims.set_hexpand(True)
+        self.box.add(self.scrlwnd_victims)
+
+        self.list_killers = Gtk.ListStore(str, str)
+        self.list_victims = Gtk.ListStore(str, str)
+
+        self.tree_killers = Gtk.TreeView.new_with_model(self.list_killers)
+        for i, title in enumerate(["Player", "Kills"]):
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(title, renderer, text=i)
+            self.tree_killers.append_column(column)
+        
+        self.tree_victims = Gtk.TreeView.new_with_model(self.list_victims)
+        for i, title in enumerate(["Player", "Deaths"]):
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(title, renderer, text=i)
+            self.tree_victims.append_column(column)
+
+        self.tree_killers.set_grid_lines(Gtk.TreeViewGridLines.VERTICAL)
+        self.tree_victims.set_grid_lines(Gtk.TreeViewGridLines.VERTICAL)
+
+        self.scrlwnd_killers.add(self.tree_killers)
+        self.scrlwnd_victims.add(self.tree_victims)
+
+        self.show_all()
+
+        self.connect("delete-event", self.hide_on_delete_handler)
+
+        self.shown = False
+        self.quitting = False
+        self.updating = False
+        self.old_killers = []
+        self.old_victims = []
+        self.killers = []
+        self.victims = []
+
+        self.update_data()
+        self.update_gui()
+
+        self.timer_upd = RepeatedTimer(30, self.update_data)
+        GLib.timeout_add(1000, self.update_gui)
+
+    def quit_handler(self, *args):
+        self.quitting = True
+        while self.updating:
+            time.sleep(.05)
+        self.timer_upd.cancel()
+        self.destroy()
+
+    def hide_on_delete_handler(self, *args):
+        self.hide_on_delete()
+        self.shown = False
+        return True
+    
+    def update_data(self, *args):
+        if self.quitting:
+            return False
+        self.updating = True
+        self.killers = []
+        self.victims = []
+
+        try:
+            response = requests.get(URLGETKILLERS)
+            killers = json.loads(response.text)
+            if killers["status"] != "ok" or not killers["body"]:
+                raise Exception
+            for pair in killers["body"]:
+                self.killers.append(pair)
+        except:
+            e = sys.exc_info()[0]
+            print(str(e))
+            self.killers = self.old_killers
+
+        try:
+            response = requests.get(URLGETVICTIMS)
+            victims = json.loads(response.text)
+            if victims["status"] != "ok" or not victims["body"]:
+                raise Exception
+            for pair in victims["body"]:
+                self.victims.append(pair)
+        except:
+            e = sys.exc_info()[0]
+            print(str(e))
+            self.victims = self.old_victims
+
+        self.updating = False
+
+    def update_gui(self, *args):
+        if self.updating:
+            return True
+
+        if self.old_killers != self.killers:
+            self.list_killers.clear()
+            for i in self.killers:
+                self.list_killers.append([i["name"], i["kills"]])
+
+        if self.old_victims != self.victims:
+            self.list_victims.clear()
+            for i in self.victims:
+                self.list_victims.append([i["name"], i["deaths"]])
+
+        return True
+
+
 class Chat(Gtk.Window):
 
     def __init__(self):
@@ -148,7 +272,7 @@ class Chat(Gtk.Window):
         self.scrlwnd_online.set_hexpand(True)
         frame_online.add(self.scrlwnd_online)
         grid.attach_next_to(frame_online, frame_chat,
-                            Gtk.PositionType.RIGHT, 2, 10)
+                            Gtk.PositionType.RIGHT, 2, 9)
 
         self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
         self.scrlwnd_online.add(self.online_box)
@@ -162,18 +286,25 @@ class Chat(Gtk.Window):
 
         self.btn_send = Gtk.Button(label=">")
         self.btn_send.connect("clicked", self.send_msg)
-        grid.attach_next_to(self.btn_send, frame_online,
-                            Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(self.btn_send, self.entry,
+                            Gtk.PositionType.RIGHT, 1, 1)
 
         self.btn_upd = Gtk.Button(label="↻")
         self.btn_upd.connect("clicked", self.bh_update)
         grid.attach_next_to(self.btn_upd, self.btn_send,
                             Gtk.PositionType.RIGHT, 1, 1)
 
+        self.btn_rust = Gtk.Button(label="ⓘ")
+        self.btn_rust.connect("clicked", self.toggle_rust_win)
+        grid.attach_next_to(self.btn_rust, frame_online, Gtk.PositionType.BOTTOM, 2, 1)
+
         self.ind = Gtk.StatusIcon.new()
         self.ind.set_from_file(config + "icons/ffgs-chat-icon.png")
         self.ind.connect("activate", self.toggle_visibility)
 
+        self.win_rust = RustWindow(title="Rust stats")
+        self.win_rust.set_visible(False)
+        
         self.lines = []
         self.old_lines = []
         self.online = []
@@ -189,13 +320,19 @@ class Chat(Gtk.Window):
         self.timer_upd = RepeatedTimer(DELAY, self.update_data)
         GLib.timeout_add(1000, self.update_gui)
 
+    def toggle_rust_win(self, *args):
+        self.win_rust.set_visible(not self.win_rust.shown)
+        self.win_rust.shown = not self.win_rust.shown
+
     def toggle_visibility(self, widget):
         if self.hidden:
             root.release()
             self.set_visible(True)
+            self.win_rust.set_visible(self.win_rust.shown)
         else:
             root.hold()
             self.set_visible(False)
+            self.win_rust.set_visible(False)
         self.hidden = not self.hidden
         return True
 
@@ -223,6 +360,7 @@ class Chat(Gtk.Window):
         while self.updating is True:
             time.sleep(0.05)
         self.timer_upd.cancel()
+        self.win_rust.quit_handler()
         Gtk.main_quit()
 
     def update_data(self, widget=None):

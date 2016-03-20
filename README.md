@@ -23,6 +23,7 @@
 ### ffgs-chat
 Служит для работы с чатиком на [FFGS](http://ffgs.ru/). Минимум костылей благодаря толковому API.
 ![Скрин окна](http://i.imgur.com/yLe0wr0l.jpg)
+![Скрин окна с инфой](http://i.imgur.com/ObkvOlp.png)
 
 **Настройка**:
 * Создайте файл `~/.local/share/python-utils/ffgs-chat.cfg`.

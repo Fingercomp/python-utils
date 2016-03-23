@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "2.1.0"
+VERSION = "2.1.1"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -169,7 +169,6 @@ class RustWindow(Gtk.Window):
         self.killers = []
         self.victims = []
 
-        self.update_data()
         self.update_gui()
 
         self.timer_upd = RepeatedTimer(30, self.update_data)
@@ -222,6 +221,9 @@ class RustWindow(Gtk.Window):
 
     def update_gui(self, *args):
         if self.updating:
+            return True
+        
+        if not self.shown:
             return True
 
         if self.old_killers != self.killers:
@@ -321,6 +323,8 @@ class Chat(Gtk.Window):
         GLib.timeout_add(1000, self.update_gui)
 
     def toggle_rust_win(self, *args):
+        if not self.win_rust.shown:
+            self.win_rust.update_data()
         self.win_rust.set_visible(not self.win_rust.shown)
         self.win_rust.shown = not self.win_rust.shown
 

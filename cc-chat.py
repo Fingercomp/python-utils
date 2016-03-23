@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "2.0.1"
+VERSION = "2.0.2"
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -379,6 +379,9 @@ class InfoWindow(Gtk.Window):
 
     def update_gui(self, *args):
         if self.updating:
+            return True
+        
+        if not self.shown:
             return True
 
         if self.old_top_month != self.top_month:

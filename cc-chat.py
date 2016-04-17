@@ -206,7 +206,7 @@ class InfoWindow(Gtk.Window):
 
 
         self.nick_label = Gtk.Label(nickname)
-        self.nick_label.modify_font(Pango.FontDescription("Bold 20"))
+        self.nick_label.modify_font(Pango.FontDescription("Bold 18"))
         self.grid.attach(self.nick_label, 1, 1, 1, 1)
 
         self.balance = Gtk.Label("$ 0")

@@ -123,7 +123,7 @@ class CheckServers:
         self.ind.connect("popup-menu", lambda icon, btn, time: self.menu.popup(None, None, None, None, btn, time))
         if nots is True:
             Notify.init("check-servers")
-            self.notification = Notify.Notification.new("Vote?", "Looks like it's time to vote!")
+            self.notification = Notify.Notification.new("Vote?", "It's time to vote!")
             self.min30_sent = False
             self.min15_sent = False
             self.min5_sent = False

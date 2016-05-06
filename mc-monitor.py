@@ -131,6 +131,7 @@ class CheckServers:
         self.show_notification = False
         self.ready_to_show = True
         self.gui_upd = False
+        self.cur_icon = 0
 
     def menu_setup(self):
         self.menu = Gtk.Menu()
@@ -202,14 +203,18 @@ class CheckServers:
         cur_time = dt.datetime.now()
         if cur_time >= vote_at:
             self.vote_item.set_sensitive(True)
-            self.ind.set_from_file(config + "icons/mc-monitor-important.png")
+            if self.cur_icon != 1:
+                self.ind.set_from_file(config + "icons/mc-monitor-important.png")
+                self.cur_icon = 1
             self.vote_item.set_label("Restart the timer")
             if self.show_notification is False and nots is True:
                 self.show_notification = True
                 self.notification.show()
                 GLib.timeout_add(30000, self.Notify_vote)
         else:
-            self.ind.set_from_file(config + "icons/mc-monitor.png")
+            if self.cur_icon != 0:
+                self.ind.set_from_file(config + "icons/mc-monitor.png")
+                self.cur_icon = 0
             vote_delta = vote_at - cur_time
             self.vote_item.set_label("Next vote: " + str(vote_delta).split(".")[0])
             self.vote_item.set_sensitive(False)

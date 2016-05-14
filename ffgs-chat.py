@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
 
+"""
+   Copyright 2016 Alexander "Fingercomp"
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
+
 VERSION = "2.1.1"
 
 import gi
@@ -144,7 +160,7 @@ class RustWindow(Gtk.Window):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=i)
             self.tree_killers.append_column(column)
-        
+
         self.tree_victims = Gtk.TreeView.new_with_model(self.list_victims)
         for i, title in enumerate(["Player", "Deaths"]):
             renderer = Gtk.CellRendererText()
@@ -185,7 +201,7 @@ class RustWindow(Gtk.Window):
         self.hide_on_delete()
         self.shown = False
         return True
-    
+
     def update_data(self, *args):
         if self.quitting:
             return False
@@ -222,7 +238,7 @@ class RustWindow(Gtk.Window):
     def update_gui(self, *args):
         if self.updating:
             return True
-        
+
         if not self.shown:
             return True
 
@@ -306,7 +322,7 @@ class Chat(Gtk.Window):
 
         self.win_rust = RustWindow(title="Rust stats")
         self.win_rust.set_visible(False)
-        
+
         self.lines = []
         self.old_lines = []
         self.online = []

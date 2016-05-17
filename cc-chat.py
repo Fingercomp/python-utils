@@ -327,7 +327,10 @@ class InfoWindow(Gtk.Window):
         self.top_uu = []
         self.account = {"money": 0, "uu": 0, "votes": {"rate": 0, "top": 0, "mon": 0}, "tops": {"month": 1, "money": 1, "uu": 1}}
 
-        self.update_data()
+        try:
+            self.update_data()
+        except:
+            pass
         self.update_gui()
 
         self.timer_upd = RepeatedTimer(30, self.update_data)
@@ -552,7 +555,10 @@ class Chat(Gtk.Window):
         self.edit_msg = False
         self.proceed_delete = 0
 
-        self.update_data()
+        try:
+            self.update_data()
+        except:
+            pass
         self.update_gui()
 
         self.timer_upd = RepeatedTimer(DELAY, self.update_data)

@@ -651,11 +651,19 @@ class Chat(Gtk.Window):
                 rows = html.find_all("tr")
                 for row in rows:
                     blocks = row.find_all("td")
-                    author = blocks[0].find(class_="at_member")["data-store"]
+                    author = blocks[0].find(class_="at_member")
+                    if author:
+                        author = author["data-store"]
+                    else:
+                        author = blocks[0].find("abbr").string()
                     author_short = author[:]
                     if len(author) > 16:
                         author_short = author[:16] + "…"
-                    author_url = blocks[0].find("a", class_="_hovertrigger")["href"]
+                    author_url = blocks[0].find("a", class_="_hoversetup")
+                    if author_url:
+                        author_url = author_url["href"]
+                    else:
+                        author_url = "http://computercraft.ru/"
                     is_editable = False
                     are_mod_avail = False
                     shout_id = 1

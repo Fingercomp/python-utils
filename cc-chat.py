@@ -359,6 +359,7 @@ class InfoWindow(Gtk.Window):
         try:
             response = requests.get(URLTOPMONTH)
             top_month = json.loads(response.text)
+            user_tops["month"] = "N/A"
             for i, val in enumerate(top_month):
                 i += 1
                 if val["user"] == self.nickname.lower():
@@ -370,6 +371,7 @@ class InfoWindow(Gtk.Window):
         try:
             response = requests.get(URLTOPMONEY)
             top_money = json.loads(response.text)
+            user_tops["money"] = "N/A"
             for i, val in enumerate(top_money):
                 i += 1
                 if val["name"] == self.nickname.lower():
@@ -381,6 +383,7 @@ class InfoWindow(Gtk.Window):
         try:
             response = requests.get(URLTOPUU)
             top_uu = json.loads(response.text)
+            user_tops["uu"] = "N/A"
             for i, val in enumerate(top_uu):
                 i += 1
                 if val["name"] == self.nickname.lower():
@@ -431,9 +434,12 @@ class InfoWindow(Gtk.Window):
             self.money_label.set_text("Money: #" + str(self.account["tops"]["money"]))
             self.uu_label.set_text("UU: #" + str(self.account["tops"]["uu"]))
 
-            self.month_tree.set_cursor(int(self.account["tops"]["month"]) - 1)
-            self.money_tree.set_cursor(int(self.account["tops"]["money"]) - 1)
-            self.uu_tree.set_cursor(int(self.account["tops"]["uu"]) - 1)
+            if self.account["tops"]["month"] != "N/A":
+                self.month_tree.set_cursor(int(self.account["tops"]["month"]) - 1)
+            if self.account["tops"]["money"] != "N/A":
+                self.money_tree.set_cursor(int(self.account["tops"]["money"]) - 1)
+            if self.account["tops"]["uu"] != "N/A":
+                self.uu_tree.set_cursor(int(self.account["tops"]["uu"]) - 1)
 
         self.old_top_month = copy.deepcopy(self.top_month)
         self.old_top_money = copy.deepcopy(self.top_money)
@@ -875,7 +881,7 @@ class Chat(Gtk.Window):
     def get_user(self, uid):
         try:
             response = requests.get(URLUSER + uid + "-getuser", headers=HEADERS)
-            html = Soup(response.text)
+            html = Soup(response.text, "html.parser")
             title = html.find("title").string
             if title.split(" ")[0] == "Ошибка":
                 return ""

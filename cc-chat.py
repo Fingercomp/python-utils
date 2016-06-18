@@ -17,11 +17,6 @@
 """
 
 
-VERSION = "2.0.2"
-
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib, GObject, Pango
 from bs4 import BeautifulSoup as Soup
 import urllib.request as ur
 import urllib.parse as parse
@@ -35,6 +30,12 @@ import time
 import json
 from html.parser import HTMLParser
 import re
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk, GLib, GObject, Pango
+
+VERSION = "2.0.2"
 
 GLib.threads_init()
 
@@ -53,8 +54,8 @@ if not os.path.exists(config + "cc-chat.cfg"):
                                message_type=Gtk.MessageType.INFO,
                                buttons=Gtk.ButtonsType.OK,
                                message_format="Configuration file created!")
-    dialog.format_secondary_markup("Path to file: <b>" + config + \
-        "cc-chat.cfg</b>.")
+    dialog.format_secondary_markup("Path to file: <b>" + config +
+                                   "cc-chat.cfg</b>.")
     dialog.run()
     dialog.destroy()
 
@@ -62,7 +63,8 @@ if not os.path.exists(config + "icons/"):
     os.mkdir(config + "icons/")
 
 if not os.path.exists(config + "icons/cc-chat-icon.png"):
-    response = ur.urlopen("https://raw.githubusercontent.com/Fingercomp/" \
+    response = ur.urlopen(
+        "https://raw.githubusercontent.com/Fingercomp/"
         "python-utils/master/icons/cc-chat-icon.png")
     f = open(config + "icons/cc-chat-icon.png", "wb")
     img = response.read()
@@ -79,34 +81,41 @@ if len(userdata) != 2:
                                message_type=Gtk.MessageType.ERROR,
                                buttons=Gtk.ButtonsType.CLOSE,
                                message_format="Bad config!")
-    dialog.format_secondary_markup("Got " + str(len(userdata)) + " line" + \
-        mpl + ", expected 2")
+    dialog.format_secondary_markup("Got " + str(len(userdata)) + " line" +
+                                   mpl + ", expected 2")
     dialog.run()
     dialog.destroy()
     sys.exit(-1)
 
 DELAY = 10
-URL = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&section=" \
-      "coreAjax&secure_key=" + userdata[0] + "&type=getShouts&lastid=1&" \
-      "global=1"
-URLSEND = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&" \
-          "section=coreAjax&secure_key=" + userdata[0] + "&type=submit&" \
-          "lastid=1&global=1"
-URLONLINE = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&" \
-            "section=coreAjax&secure_key=" + userdata[0] + "&type=getMembers" \
-            "&global=1"
+URL = (
+    "http://computercraft.ru/index.php?app=shoutbox&module=ajax&section=coreA"
+    "jax&secure_key=" + userdata[0] + "&type=getShouts&lastid=1&global=1")
+URLSEND = (
+    "http://computercraft.ru/index.php?app=shoutbox&module=ajax&section=coreA"
+    "jax&secure_key=" + userdata[0] + "&type=submit&lastid=1&global=1")
+URLONLINE = (
+    "http://computercraft.ru/index.php?app=shoutbox&module=ajax&section=coreA"
+    "jax&secure_key=" + userdata[0] + "&type=getMembers&global=1")
 URLUSER = "http://computercraft.ru/user/"
 URLTOPMONTH = "http://launcher.computercraft.ru/api/topmonth/100"
 URLTOPMONEY = "http://launcher.computercraft.ru/api/topmoney/100"
 URLTOPUU = "http://launcher.computercraft.ru/api/top/100"
 URLINFO = "http://launcher.computercraft.ru/api/info/"
-URLEDIT = "http://computercraft.ru/index.php?app=shoutbox&module=ajax&section=coreAjax&secure_key=" + userdata[0] + "&type=mod&action=performCommand&command=edit&modtype=shout"
-URLDELETE = "http://computercraft.ru/index.php?s=6089d39c1901938ea80333ceb8a7cac5&&app=shoutbox&module=ajax&section=coreAjax&secure_key=" + userdata[0] + "&type=mod&action=performCommand&command=delete&modtype=shout&id="
+URLEDIT = (
+    "http://computercraft.ru/index.php?app=shoutbox&module=ajax&sectio"
+    "n=coreAjax&secure_key=" + userdata[0] + "&type=mod&action=performCommand"
+    "&command=edit&modtype=shout")
+URLDELETE = (
+    "http://computercraft.ru/index.php?s=6089d39c1901938ea80333ceb8a7cac5&&ap"
+    "p=shoutbox&module=ajax&section=coreAjax&secure_key=" + userdata[0] + "&t"
+    "ype=mod&action=performCommand&command=delete&modtype=shout&id=")
 HEADERS = {
     "Host": "computercraft.ru",
-    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:42.0) " \
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:42.0) "
                   "Gecko/20100101 Firefox/42.0",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,applic"
+              "ation/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.7,ru;q=0.3",
     "Accept-Encoding": "utf-8",
     "Cookie": userdata[1],
@@ -159,14 +168,15 @@ gt = "\uf8f1"
 
 root = Gtk.Application()
 
+
 # http://stackoverflow.com/a/13151299
 class RepeatedTimer(object):
     def __init__(self, interval, function, *args, **kwargs):
-        self._timer     = None
-        self.interval   = interval
-        self.function   = function
-        self.args       = args
-        self.kwargs     = kwargs
+        self._timer = None
+        self.interval = interval
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
         self.is_running = False
         self.start()
 
@@ -185,6 +195,7 @@ class RepeatedTimer(object):
         self._timer.cancel()
         self.is_running = False
 
+
 class DateTooltip(Gtk.Tooltip):
 
     def __init__(self, text=None, **kwargs):
@@ -201,14 +212,16 @@ class DateTooltip(Gtk.Tooltip):
 
 class InfoWindow(Gtk.Window):
 
-    def __init__(self, nickname = "Byte", *args, **kwargs):
+    def __init__(self, nickname="Byte", *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.set_default_size(300, 480)
 
-        self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        self.main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
+                                spacing=5)
         self.main_box.set_homogeneous(False)
 
-        self.grid = Gtk.Grid(column_spacing=5, row_spacing=5, hexpand=True, vexpand=True)
+        self.grid = Gtk.Grid(column_spacing=5, row_spacing=5, hexpand=True,
+                             vexpand=True)
         self.grid.set_border_width(5)
         self.grid.set_column_homogeneous(True)
 
@@ -220,46 +233,49 @@ class InfoWindow(Gtk.Window):
         self.footer.set_column_homogeneous(True)
         self.main_box.add(self.footer)
 
-
-
         self.nick_label = Gtk.Label(nickname)
         self.nick_label.modify_font(Pango.FontDescription("Bold 18"))
         self.grid.attach(self.nick_label, 1, 1, 1, 1)
 
         self.balance = Gtk.Label("$ 0")
         self.balance.modify_font(Pango.FontDescription("Bold 14"))
-        self.grid.attach_next_to(self.balance, self.nick_label, Gtk.PositionType.RIGHT, 1, 1)
+        self.grid.attach_next_to(self.balance, self.nick_label,
+                                 Gtk.PositionType.RIGHT, 1, 1)
 
         self.uu = Gtk.Label("UU 0")
         self.uu.modify_font(Pango.FontDescription("Bold 14"))
-        self.grid.attach_next_to(self.uu, self.balance, Gtk.PositionType.RIGHT, 1, 1)
-
+        self.grid.attach_next_to(self.uu, self.balance,
+                                 Gtk.PositionType.RIGHT, 1, 1)
 
         self.month_label = Gtk.Label("Month: #1")
-        self.grid.attach_next_to(self.month_label, self.nick_label, Gtk.PositionType.BOTTOM, 1, 1)
+        self.grid.attach_next_to(self.month_label, self.nick_label,
+                                 Gtk.PositionType.BOTTOM, 1, 1)
 
         self.money_label = Gtk.Label("Money: #1")
-        self.grid.attach_next_to(self.money_label, self.month_label, Gtk.PositionType.RIGHT, 1, 1)
+        self.grid.attach_next_to(self.money_label, self.month_label,
+                                 Gtk.PositionType.RIGHT, 1, 1)
 
         self.uu_label = Gtk.Label("UU: #1")
-        self.grid.attach_next_to(self.uu_label, self.money_label, Gtk.PositionType.RIGHT, 1, 1)
-
+        self.grid.attach_next_to(self.uu_label, self.money_label,
+                                 Gtk.PositionType.RIGHT, 1, 1)
 
         self.scrlwnd_month = Gtk.ScrolledWindow()
         self.scrlwnd_month.set_vexpand(True)
         self.scrlwnd_month.set_hexpand(True)
-        self.grid.attach_next_to(self.scrlwnd_month, self.month_label, Gtk.PositionType.BOTTOM, 1, 1)
+        self.grid.attach_next_to(self.scrlwnd_month, self.month_label,
+                                 Gtk.PositionType.BOTTOM, 1, 1)
 
         self.scrlwnd_money = Gtk.ScrolledWindow()
         self.scrlwnd_money.set_vexpand(True)
         self.scrlwnd_money.set_hexpand(True)
-        self.grid.attach_next_to(self.scrlwnd_money, self.scrlwnd_month, Gtk.PositionType.RIGHT, 1, 1)
+        self.grid.attach_next_to(self.scrlwnd_money, self.scrlwnd_month,
+                                 Gtk.PositionType.RIGHT, 1, 1)
 
         self.scrlwnd_uu = Gtk.ScrolledWindow()
         self.scrlwnd_uu.set_vexpand(True)
         self.scrlwnd_uu.set_hexpand(True)
-        self.grid.attach_next_to(self.scrlwnd_uu, self.scrlwnd_money, Gtk.PositionType.RIGHT, 1, 1)
-
+        self.grid.attach_next_to(self.scrlwnd_uu, self.scrlwnd_money,
+                                 Gtk.PositionType.RIGHT, 1, 1)
 
         self.month_list = Gtk.ListStore(str, str, str)
         self.money_list = Gtk.ListStore(str, str, str)
@@ -291,7 +307,6 @@ class InfoWindow(Gtk.Window):
         self.scrlwnd_money.add(self.money_tree)
         self.scrlwnd_uu.add(self.uu_tree)
 
-
         self.votes_label = Gtk.Label()
         self.votes_label.set_markup("<b><i>VOTES</i></b>")
         self.votes_label.set_justify(Gtk.Justification.LEFT)
@@ -300,15 +315,18 @@ class InfoWindow(Gtk.Window):
 
         self.mcrate = Gtk.Label()
         self.mcrate.set_markup("<b>MCRate</b>: 0")
-        self.footer.attach_next_to(self.mcrate, self.votes_label, Gtk.PositionType.RIGHT, 1, 1)
+        self.footer.attach_next_to(self.mcrate, self.votes_label,
+                                   Gtk.PositionType.RIGHT, 1, 1)
 
         self.topcraft = Gtk.Label()
         self.topcraft.set_markup("<b>TopCraft</b>: 0")
-        self.footer.attach_next_to(self.topcraft, self.mcrate, Gtk.PositionType.RIGHT, 1, 1)
+        self.footer.attach_next_to(self.topcraft, self.mcrate,
+                                   Gtk.PositionType.RIGHT, 1, 1)
 
         self.monitor = Gtk.Label()
         self.monitor.set_markup("<b>MonitorMC</b>: 0")
-        self.footer.attach_next_to(self.monitor, self.topcraft, Gtk.PositionType.RIGHT, 1, 1)
+        self.footer.attach_next_to(self.monitor, self.topcraft,
+                                   Gtk.PositionType.RIGHT, 1, 1)
 
         self.show_all()
 
@@ -325,7 +343,20 @@ class InfoWindow(Gtk.Window):
         self.top_month = []
         self.top_money = []
         self.top_uu = []
-        self.account = {"money": 0, "uu": 0, "votes": {"rate": 0, "top": 0, "mon": 0}, "tops": {"month": 1, "money": 1, "uu": 1}}
+        self.account = {
+            "money": 0,
+            "uu": 0,
+            "votes": {
+                "rate": 0,
+                "top": 0,
+                "mon": 0
+            },
+            "tops": {
+                "month": 1,
+                "money": 1,
+                "uu": 1
+            }
+        }
 
         try:
             self.update_data()
@@ -364,7 +395,8 @@ class InfoWindow(Gtk.Window):
                 i += 1
                 if val["user"] == self.nickname.lower():
                     user_tops["month"] = str(i)
-                self.top_month.append({"num": str(i), "user": val["user"], "votes": val["voices"]})
+                self.top_month.append({"num": str(i), "user": val["user"],
+                                       "votes": val["voices"]})
         except:
             self.top_month = self.old_top_month
 
@@ -376,7 +408,8 @@ class InfoWindow(Gtk.Window):
                 i += 1
                 if val["name"] == self.nickname.lower():
                     user_tops["money"] = str(i)
-                self.top_money.append({"num": str(i), "user": str(val["name"]), "money": str(val["money"])})
+                self.top_money.append({"num": str(i), "user": str(val["name"]),
+                                       "money": str(val["money"])})
         except:
             self.top_money = self.old_top_money
 
@@ -388,14 +421,21 @@ class InfoWindow(Gtk.Window):
                 i += 1
                 if val["name"] == self.nickname.lower():
                     user_tops["uu"] = str(i)
-                self.top_uu.append({"num": str(i), "user": str(val["name"]), "votes": str(val["voices"]), "uu": str(val["uu"]), "money": str(val["money"])})
+                self.top_uu.append({"num": str(i), "user": str(val["name"]),
+                                    "votes": str(val["voices"]),
+                                    "uu": str(val["uu"]),
+                                    "money": str(val["money"])})
         except:
             self.top_uu = self.old_top_uu
 
         try:
             response = requests.get(URLINFO + self.nickname)
             info = json.loads(response.text)[0]
-            self.account = {"money": str(info["money"]), "uu": str(info["uu"]), "votes": {"rate": str(info["votes_mcrate"]), "top": str(info["votes_top"]), "mon": str(info["votes_monit"])}, "tops": user_tops}
+            self.account = {"money": str(info["money"]), "uu": str(info["uu"]),
+                            "votes": {"rate": str(info["votes_mcrate"]),
+                                      "top": str(info["votes_top"]),
+                                      "mon": str(info["votes_monit"])},
+                            "tops": user_tops}
         except:
             self.account = self.old_account
         self.updating = False
@@ -420,26 +460,36 @@ class InfoWindow(Gtk.Window):
         if self.old_top_uu != self.top_uu:
             self.uu_list.clear()
             for i in self.top_uu:
-                self.uu_list.append([i["num"], i["user"], i["votes"], i["money"], i["uu"]])
+                self.uu_list.append([i["num"], i["user"], i["votes"],
+                                     i["money"], i["uu"]])
 
         if self.old_account != self.account:
             self.balance.set_text("$ " + self.account["money"])
             self.uu.set_text("UU " + self.account["uu"])
 
-            self.mcrate.set_markup("<b>MCRate</b>: " + self.account["votes"]["rate"])
-            self.topcraft.set_markup("<b>TopCraft</b>: " + self.account["votes"]["top"])
-            self.monitor.set_markup("<b>MonitorMC</b>: " + self.account["votes"]["mon"])
+            self.mcrate.set_markup("<b>MCRate</b>: " +
+                                   self.account["votes"]["rate"])
+            self.topcraft.set_markup("<b>TopCraft</b>: " +
+                                     self.account["votes"]["top"])
+            self.monitor.set_markup("<b>MonitorMC</b>: " +
+                                    self.account["votes"]["mon"])
 
-            self.month_label.set_text("Month: #" + str(self.account["tops"]["month"]))
-            self.money_label.set_text("Money: #" + str(self.account["tops"]["money"]))
-            self.uu_label.set_text("UU: #" + str(self.account["tops"]["uu"]))
+            self.month_label.set_text("Month: #" +
+                                      str(self.account["tops"]["month"]))
+            self.money_label.set_text("Money: #" +
+                                      str(self.account["tops"]["money"]))
+            self.uu_label.set_text("UU: #" +
+                                   str(self.account["tops"]["uu"]))
 
             if self.account["tops"]["month"] != "N/A":
-                self.month_tree.set_cursor(int(self.account["tops"]["month"]) - 1)
+                self.month_tree.set_cursor(
+                    int(self.account["tops"]["month"]) - 1)
             if self.account["tops"]["money"] != "N/A":
-                self.money_tree.set_cursor(int(self.account["tops"]["money"]) - 1)
+                self.money_tree.set_cursor(
+                    int(self.account["tops"]["money"]) - 1)
             if self.account["tops"]["uu"] != "N/A":
-                self.uu_tree.set_cursor(int(self.account["tops"]["uu"]) - 1)
+                self.uu_tree.set_cursor(
+                    int(self.account["tops"]["uu"]) - 1)
 
         self.old_top_month = copy.deepcopy(self.top_month)
         self.old_top_money = copy.deepcopy(self.top_money)
@@ -454,7 +504,6 @@ class MsgLabel(Gtk.Label):
     def __init__(self, data, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.data = data
-
 
 
 class Chat(Gtk.Window):
@@ -495,7 +544,8 @@ class Chat(Gtk.Window):
         grid.attach_next_to(frame_online, frame_chat,
                             Gtk.PositionType.RIGHT, 2, 11)
 
-        self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
+                                  spacing=5)
         self.scrlwnd_online.add(self.online_box)
         self.online_box.override_background_color(Gtk.StateType.NORMAL,
                                                   Gdk.RGBA(1, 1, 1, .8))
@@ -504,19 +554,23 @@ class Chat(Gtk.Window):
 
         self.btn_del_cancel = Gtk.Button(label="Cancel")
         self.btn_del_cancel.connect("clicked", self.delete_abort)
-        grid.attach_next_to(self.btn_del_cancel, frame_chat, Gtk.PositionType.BOTTOM, 7, 1)
+        grid.attach_next_to(self.btn_del_cancel, frame_chat,
+                            Gtk.PositionType.BOTTOM, 7, 1)
 
         self.btn_del_ok = Gtk.Button(label="OK")
         self.btn_del_ok.connect("clicked", self.delete_confirm)
-        grid.attach_next_to(self.btn_del_ok, self.btn_del_cancel, Gtk.PositionType.RIGHT, 1, 1)
+        grid.attach_next_to(self.btn_del_ok, self.btn_del_cancel,
+                            Gtk.PositionType.RIGHT, 1, 1)
 
         self.entry = Gtk.Entry()
         self.entry.connect("activate", self.send_msg)
-        grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 8, 1)
+        grid.attach_next_to(self.entry, frame_chat,
+                            Gtk.PositionType.BOTTOM, 8, 1)
 
         self.edit_entry = Gtk.Entry()
         self.edit_entry.connect("activate", self.process_edit)
-        grid.attach_next_to(self.edit_entry, frame_chat, Gtk.PositionType.BOTTOM, 8, 1)
+        grid.attach_next_to(self.edit_entry, frame_chat,
+                            Gtk.PositionType.BOTTOM, 8, 1)
 
         self.btn_send = Gtk.Button(label=">")
         self.btn_send.connect("clicked", self.send_msg)
@@ -535,7 +589,8 @@ class Chat(Gtk.Window):
 
         self.btn_info = Gtk.Button(label="ⓘ")
         self.btn_info.connect("clicked", self.toggle_info_win)
-        grid.attach_next_to(self.btn_info, frame_online, Gtk.PositionType.BOTTOM, 2, 1)
+        grid.attach_next_to(self.btn_info, frame_online,
+                            Gtk.PositionType.BOTTOM, 2, 1)
 
         self.ind = Gtk.StatusIcon.new()
         self.ind.set_from_file(config + "icons/cc-chat-icon.png")
@@ -547,7 +602,8 @@ class Chat(Gtk.Window):
         self.btn_del_cancel.hide()
         self.btn_del_ok.hide()
 
-        self.info_win = InfoWindow(nickname = self.get_cur_user(), title="CC.ru Tops & Balance")
+        self.info_win = InfoWindow(nickname=self.get_cur_user(),
+                                   title="CC.ru Tops & Balance")
         self.info_win.set_visible(False)
 
         self.hidden = False
@@ -595,15 +651,20 @@ class Chat(Gtk.Window):
 
     def paste_nick(self, widget, event):
         if event.button == 1:
-            if event.state & Gdk.ModifierType.CONTROL_MASK == \
-                Gdk.ModifierType.CONTROL_MASK:
+            if (event.state & Gdk.ModifierType.CONTROL_MASK ==
+                    Gdk.ModifierType.CONTROL_MASK):
                 nickname = widget.get_text()
                 self.entry.do_insert_at_cursor(self.entry, nickname + " ")
                 self.entry.grab_focus_without_selecting()
                 move_at = self.entry.props.cursor_position + len(nickname) + 1
-                self.entry.do_move_cursor(self.entry, Gtk.MovementStep.LOGICAL_POSITIONS, move_at, False)
-            elif event.state & Gdk.ModifierType.MOD1_MASK == \
-                Gdk.ModifierType.MOD1_MASK:
+                self.entry.do_move_cursor(
+                    self.entry,
+                    Gtk.MovementStep.LOGICAL_POSITIONS,
+                    move_at,
+                    False
+                )
+            elif (event.state & Gdk.ModifierType.MOD1_MASK ==
+                    Gdk.ModifierType.MOD1_MASK):
                 link = ""
                 try:
                     link = self.user_links[widget.get_text()[1:]]
@@ -615,14 +676,15 @@ class Chat(Gtk.Window):
 
     def msg_edit(self, widget, event):
         if event.button == 1:
-            if event.state & Gdk.ModifierType.CONTROL_MASK == \
-                Gdk.ModifierType.CONTROL_MASK and self.proceed_delete == 0:
+            if (event.state & Gdk.ModifierType.CONTROL_MASK ==
+                    Gdk.ModifierType.CONTROL_MASK and
+                    self.proceed_delete == 0):
                 data = widget.data
                 if data["editable"]:
                     self.edit_shout_user_interface(data["id"], data["msg"])
                     return True
-            elif event.state & Gdk.ModifierType.MOD1_MASK == \
-                Gdk.ModifierType.MOD1_MASK:
+            elif (event.state & Gdk.ModifierType.MOD1_MASK ==
+                    Gdk.ModifierType.MOD1_MASK):
                 data = widget.data
                 if data["mod"]:
                     self.delete_shout_step1(data["id"])
@@ -673,18 +735,25 @@ class Chat(Gtk.Window):
                     is_editable = False
                     are_mod_avail = False
                     shout_id = 1
-                    right_span = blocks[2].find("span", class_="right").find_all("a")
+                    right_span = (blocks[2].find("span", class_="right")
+                                  .find_all("a"))
                     for tag in right_span:
-                        if re.match("return ipb.shoutbox.editShout\\(\\d+?\\)", tag["onclick"]):
+                        if re.match("return ipb.shoutbox.editSh"
+                                    "out\\(\\d+?\\)", tag["onclick"]):
                             is_editable = True
-                            shout_id = int(re.match("return ipb.shoutbox.editShout\\((\\d+?)\\)", tag["onclick"]).groups()[0])
-                        if re.match("return ipb.shoutbox.modOptsLoadShout\\(\\d+?\\)", tag["onclick"]):
+                            shout_id = int(re.match("return ipb.shoutbox.edit"
+                                                    "Shout\\((\\d+?)\\)",
+                                                    tag["onclick"])
+                                           .groups()[0])
+                        if re.match("return ipb.shoutbox.modOptsLoadSho"
+                                    "ut\\(\\d+?\\)", tag["onclick"]):
                             are_mod_avail = True
-                    date = [i for i in blocks[2].find("span", class_="right").strings][0] \
-                            .strip()[1:-1]
+                    date = [i for i in blocks[2].find("span", class_="right")
+                            .strings][0].strip()[1:-1]
                     date_arr = date.split(" ")
                     month = months[date_arr[1].lower()]
-                    date = date_arr[2] + "-" + month + "-" + date_arr[0] + " " + date_arr[4]
+                    date = (date_arr[2] + "-" + month + "-" + date_arr[0] +
+                            " " + date_arr[4])
                     date_short = date_arr[4]
                     raw_msg = blocks[2].find("span", class_="shoutbox_text").p
                     if not raw_msg:
@@ -697,22 +766,28 @@ class Chat(Gtk.Window):
                         title = tag["title"]
                         if not title:
                             title = ""
-                        tag.replace_with(lt + "a href=\"" + tag["href"] + "\" title=\"" + \
-                            title + "\"" + gt + tag.text + lt + "/a" + gt)
+                        tag.replace_with(lt + "a href=\"" + tag["href"] +
+                                         "\" title=\"" + title + "\"" + gt +
+                                         tag.text + lt + "/a" + gt)
 
                     for tag in raw_msg.find_all("strong"):
-                        tag.replace_with(lt + "b" + gt + tag.text + lt + "/b" + gt)
+                        tag.replace_with(lt + "b" + gt + tag.text + lt +
+                                         "/b" + gt)
 
                     for tag in raw_msg.find_all("em"):
-                        tag.replace_with(lt + "i" + gt + tag.text + lt + "/i" + gt)
+                        tag.replace_with(lt + "i" + gt + tag.text + lt +
+                                         "/i" + gt)
 
-                    for tag in raw_msg.find_all("span", style="color: black; " + \
-                        "font-family: courier; background-color: #EAEAEA"):
-                        tag.replace_with(lt + "span background=\"gray\" " + \
-                        "foreground=\"white\"" + gt + tag.text + lt + "/span" + gt)
+                    for tag in raw_msg.find_all(
+                            "span", style="color: black; font-family: courier"
+                            "; background-color: #EAEAEA"):
+                        tag.replace_with(
+                            lt + "span background=\"gray\" foreground=\"white"
+                            "\"" + gt + tag.text + lt + "/span" + gt)
 
                     for tag in raw_msg.find_all("del"):
-                        tag.replace_with(lt + "s" + gt + tag.text + lt + "/s" + gt)
+                        tag.replace_with(lt + "s" + gt + tag.text + lt +
+                                         "/s" + gt)
                     msg = "".join([i for i in raw_msg.strings])
                     html_parser = HTMLParser()
                     msg = html_parser.unescape(msg)
@@ -721,15 +796,22 @@ class Chat(Gtk.Window):
                     msg = msg.replace(">", "&gt;")
                     msg = msg.replace(lt, "<")
                     msg = msg.replace(gt, ">")
-                    self.lines.append({"author": author, "author_short": author_short,
-                                       "url": author_url, "date": date,
-                                       "date_short": date_short, "msg": msg,
-                                       "editable": is_editable, "mod": are_mod_avail,
-                                       "id": shout_id})
+                    self.lines.append({
+                            "author": author,
+                            "author_short": author_short,
+                            "url": author_url,
+                            "date": date,
+                            "date_short": date_short,
+                            "msg": msg,
+                            "editable": is_editable,
+                            "mod": are_mod_avail,
+                            "id": shout_id
+                        })
                     self.user_links[author] = author_url
             request = ur.Request(URLONLINE, headers=HEADERS)
             try:
-                response = json.loads(ur.urlopen(request).read().decode("utf-8"))
+                response = json.loads(ur.urlopen(request).read()
+                                      .decode("utf-8"))
             except:
                 self.online = old_online
             else:
@@ -753,7 +835,6 @@ class Chat(Gtk.Window):
                         member = user
                     member_url = "http://computercraft.ru/"
                     self.online.append({"user": member, "url": member_url})
-                    #self.user_links[member] = member_url
 
             self.updating = False
 
@@ -796,12 +877,14 @@ class Chat(Gtk.Window):
                     if not prev:
                         self.chat_box.add(label_user)
                     else:
-                        self.chat_box.attach_next_to(label_user, prev,
-                                                     Gtk.PositionType.BOTTOM, 1, 1)
-                    self.chat_box.attach_next_to(label_msg, label_user,
-                                                 Gtk.PositionType.RIGHT, 1, 1)
-                    self.chat_box.attach_next_to(label_date, label_msg,
-                                                 Gtk.PositionType.RIGHT, 1, 1)
+                        self.chat_box.attach_next_to(
+                            label_user, prev, Gtk.PositionType.BOTTOM, 1, 1)
+                    self.chat_box.attach_next_to(
+                            label_msg, label_user, Gtk.PositionType.RIGHT,
+                            1, 1)
+                    self.chat_box.attach_next_to(
+                            label_date, label_msg, Gtk.PositionType.RIGHT,
+                            1, 1)
                     label_user.show()
                     label_msg.show()
                     label_date.show()
@@ -838,7 +921,8 @@ class Chat(Gtk.Window):
         self.sending = True
         self.btn_send.set_sensitive(False)
         self.entry.set_progress_pulse_step(0.2)
-        self.timeout_progress_entry = GObject.timeout_add(100, self.do_pulse, None)
+        self.timeout_progress_entry = GObject.timeout_add(100, self.do_pulse,
+                                                          None)
         msg = self.entry.get_text()
         self.thread_send = Thread(target=self.send_msg_thread, args=(msg,))
         self.thread_send.start()
@@ -849,7 +933,7 @@ class Chat(Gtk.Window):
         return True
 
     def check_sent(self, *args):
-        if self.sending == False:
+        if self.sending is False:
             self.btn_send.set_sensitive(True)
             GObject.source_remove(self.timeout_progress_entry)
             self.timeout_progress_entry = None
@@ -865,22 +949,23 @@ class Chat(Gtk.Window):
         headers = copy.deepcopy(HEADERS)
         headers["Referer"] = "http://computercraft.ru/"
         headers["X-Requested-With"] = "XMLHttpRequest"
-        headers["X-Prototype-Version"]= "1.7.1"
-        headers["Content-Type"] = "application/x-www-form-urlencoded; " \
-                                  "charset=UTF-8"
+        headers["X-Prototype-Version"] = "1.7.1"
+        headers["Content-Type"] = ("application/x-www-form-urlencoded; "
+                                   "charset=UTF-8")
         headers["Accept-Encoding"] = "gzip, deflate"
-        headers["Accept"] = "text/javascript, text/html, application/xml, " \
-                            "text/xml, */*"
+        headers["Accept"] = ("text/javascript, text/html, application/xml, "
+                             "text/xml, */*")
         headers["Cache-Control"] = "no-cache"
         try:
-            r = requests.post(URLSEND, headers=headers, data={"shout": post_data})
+            requests.post(URLSEND, headers=headers, data={"shout": post_data})
         except:
             pass
         self.sending = False
 
     def get_user(self, uid):
         try:
-            response = requests.get(URLUSER + uid + "-getuser", headers=HEADERS)
+            response = requests.get(URLUSER + uid + "-getuser",
+                                    headers=HEADERS)
             html = Soup(response.text, "html.parser")
             title = html.find("title").string
             if title.split(" ")[0] == "Ошибка":
@@ -906,13 +991,17 @@ class Chat(Gtk.Window):
         self.edit_entry.set_text(prev_msg)
         self.edit_entry.grab_focus_without_selecting()
         self.edit_msg = False
-        self.timeout_check_typed_text = GObject.timeout_add(500, self.check_typed_text, shout)
+        self.timeout_check_typed_text = (
+            GObject.timeout_add(500, self.check_typed_text, shout))
 
     def check_typed_text(self, shout, *args):
-        if self.edit_msg != False:
-            self.edit_thread = Thread(target=self.edit_msg_post, args=(shout, self.edit_msg,))
+        if self.edit_msg is not False:
+            self.edit_thread = Thread(
+                target=self.edit_msg_post,
+                args=(shout, self.edit_msg,))
             self.edit_thread.start()
-            self.timeout_check_edited = GObject.timeout_add(500, self.check_edited)
+            self.timeout_check_edited = GObject.timeout_add(
+                500, self.check_edited)
             return False
         return True
 
@@ -923,13 +1012,14 @@ class Chat(Gtk.Window):
     def edit_msg_post(self, shout, msg):
         post_data = parse.quote("<p>" + msg + "</p>", safe="")
         try:
-            r = requests.post(URLEDIT, headers=HEADERS, data={"id": str(shout), "shout": post_data})
+            requests.post(URLEDIT, headers=HEADERS, data={"id": str(shout),
+                          "shout": post_data})
         except:
             pass
         self.edit_msg = False
 
     def check_edited(self, *args):
-        if self.edit_msg == False:
+        if self.edit_msg is False:
             self.edit_entry.hide()
             self.entry.show()
             self.btn_edit.hide()
@@ -944,7 +1034,8 @@ class Chat(Gtk.Window):
         self.btn_send.set_sensitive(False)
         self.btn_del_cancel.show()
         self.btn_del_ok.show()
-        self.timeout_check_delete_step2 = GObject.timeout_add(500, self.check_delete_step2, shout)
+        self.timeout_check_delete_step2 = GObject.timeout_add(
+            500, self.check_delete_step2, shout)
 
     def delete_abort(self, *args):
         self.proceed_delete = -1
@@ -955,11 +1046,13 @@ class Chat(Gtk.Window):
     def check_delete_step2(self, shout, *args):
         if self.proceed_delete != 0:
             if self.proceed_delete == 1:
-                self.thread_delete_shout = Thread(target=self.delete_shout, args=(shout,))
+                self.thread_delete_shout = Thread(target=self.delete_shout,
+                                                  args=(shout,))
                 self.thread_delete_shout.start()
             else:
                 self.proceed_delete = 0
-            self.timeout_check_delete = GObject.timeout_add(500, self.check_delete)
+            self.timeout_check_delete = GObject.timeout_add(
+                500, self.check_delete)
             self.btn_del_cancel.hide()
             self.btn_del_ok.hide()
             return False
@@ -976,7 +1069,7 @@ class Chat(Gtk.Window):
 
     def delete_shout(self, shout, *args):
         try:
-            r = requests.get(URLDELETE + str(shout), headers=HEADERS)
+            requests.get(URLDELETE + str(shout), headers=HEADERS)
         except:
             pass
         self.proceed_delete = 0

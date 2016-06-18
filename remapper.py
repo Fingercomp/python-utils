@@ -5,7 +5,8 @@ import sys
 import shutil
 
 if len(sys.argv) == 1 or len(sys.argv) > 5:
-    print("USAGE: " + sys.argv[0] + " [file with mappings] [path to sources] [output path] (optional extension)")
+    print("USAGE: " + sys.argv[0] + " [file with mappings] [path to sources] "
+          "[output path] (optional extension)")
     sys.exit(0)
 
 mappingsfile = open(sys.argv[1]).readlines()

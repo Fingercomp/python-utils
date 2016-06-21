@@ -16,11 +16,6 @@
    limitations under the License.
 """
 
-VERSION = "2.1.1"
-
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib, GObject, Pango, Gio
 from threading import Thread
 from threading import Timer
 import urllib.request as ur
@@ -32,6 +27,12 @@ import json
 import time
 from html.parser import HTMLParser
 from bs4 import BeautifulSoup as Soup
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk, GLib, GObject
+
+VERSION = "2.1.2"
 
 GLib.threads_init()
 
@@ -52,9 +53,9 @@ if not os.path.exists(config + "ffgs-chat.cfg"):
     dialog = Gtk.MessageDialog(parent=Gtk.Window(),
                                message_type=Gtk.MessageType.INFO,
                                buttons=Gtk.ButtonsType.OK,
-                               message_format = "Configuration file created!")
-    dialog.format_secondary_markup("Path to file: <b>" + config + \
-        "ffgs-chat.cfg</b>")
+                               message_format="Configuration file created!")
+    dialog.format_secondary_markup("Path to file: <b>" + config +
+                                   "ffgs-chat.cfg</b>")
     dialog.run()
     dialog.destroy()
 
@@ -62,7 +63,8 @@ if not os.path.exists(config + "icons/"):
     os.mkdir(config + "icons/")
 
 if not os.path.exists(config + "icons/ffgs-chat-icon.png"):
-    response = ur.urlopen("https://raw.githubusercontent.com/Fingercomp/" \
+    response = ur.urlopen(
+        "https://raw.githubusercontent.com/Fingercomp/"
         "python-utils/master/icons/ffgs-chat-icon.png")
     f = open(config + "icons/ffgs-chat-icon.png", "wb")
     img = response.read()
@@ -89,14 +91,15 @@ tags2replace = {
     "em": "i",
 }
 
+
 # http://stackoverflow.com/a/13151299
 class RepeatedTimer(object):
     def __init__(self, interval, function, *args, **kwargs):
-        self._timer     = None
-        self.interval   = interval
-        self.function   = function
-        self.args       = args
-        self.kwargs     = kwargs
+        self._timer = None
+        self.interval = interval
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
         self.is_running = False
         self.start()
 
@@ -292,15 +295,16 @@ class Chat(Gtk.Window):
         grid.attach_next_to(frame_online, frame_chat,
                             Gtk.PositionType.RIGHT, 2, 9)
 
-        self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
+                                  spacing=5)
         self.scrlwnd_online.add(self.online_box)
         self.online_box.override_background_color(Gtk.StateType.NORMAL,
                                                   Gdk.RGBA(1, 1, 1, .8))
 
         self.entry = Gtk.Entry()
         self.entry.connect("activate", self.send_msg)
-        grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM, 8, 1)
-
+        grid.attach_next_to(self.entry, frame_chat, Gtk.PositionType.BOTTOM,
+                            8, 1)
 
         self.btn_send = Gtk.Button(label=">")
         self.btn_send.connect("clicked", self.send_msg)
@@ -314,7 +318,8 @@ class Chat(Gtk.Window):
 
         self.btn_rust = Gtk.Button(label="ⓘ")
         self.btn_rust.connect("clicked", self.toggle_rust_win)
-        grid.attach_next_to(self.btn_rust, frame_online, Gtk.PositionType.BOTTOM, 2, 1)
+        grid.attach_next_to(self.btn_rust, frame_online,
+                            Gtk.PositionType.BOTTOM, 2, 1)
 
         self.ind = Gtk.StatusIcon.new()
         self.ind.set_from_file(config + "icons/ffgs-chat-icon.png")
@@ -371,8 +376,13 @@ class Chat(Gtk.Window):
                         nickname = "@" + nickname
                     self.entry.do_insert_at_cursor(self.entry, nickname + " ")
                     self.entry.grab_focus_without_selecting()
-                    move_at = self.entry.props.cursor_position + len(nickname) + 1
-                    self.entry.do_move_cursor(self.entry, Gtk.MovementStep.LOGICAL_POSITIONS, move_at, False)
+                    move_at = (self.entry.props.cursor_position +
+                               len(nickname) + 1)
+                    self.entry.do_move_cursor(
+                        self.entry,
+                        Gtk.MovementStep.LOGICAL_POSITIONS,
+                        move_at,
+                        False)
         return True
 
     def bh_quit(self, widget=None, *args):
@@ -420,15 +430,19 @@ class Chat(Gtk.Window):
                             except:
                                 pass
                         if cl == "spoiler":
-                            tag.replace_with(lt + \
-                              "span foreground=\"white\" background=\"black\"" + gt + \
-                              "[" + tag.string + "]" + lt + "/span" + gt)
+                            tag.replace_with(
+                                lt + 'span foreground="white" background="'
+                                'black"' + gt + "[" + tag.string + "]" + lt +
+                                "/span" + gt)
                         if style == "text-decoration: underline;":
-                            tag.replace_with(lt + "u" + gt + tag.string + lt + "/u" + gt)
+                            tag.replace_with(lt + "u" + gt + tag.string +
+                                             lt + "/u" + gt)
                         elif style == "text-decoration: line-through;":
-                            tag.replace_with(lt + "s" + gt + tag.string + lt + "/s" + gt)
+                            tag.replace_with(lt + "s" + gt + tag.string + lt +
+                                             "/s" + gt)
                         elif style == "text-decoration: overline;":
-                            tag.replace_with(lt + "s" + gt + tag.string + lt + "/s" + gt)
+                            tag.replace_with(lt + "s" + gt + tag.string + lt +
+                                             "/s" + gt)
                     msg = html_parser.unescape(str(html))
                     msg = msg.replace("<", "&lt;").replace(">", "&gt;")
                     msg = msg.replace(lt, "<").replace(gt, ">")
@@ -478,8 +492,9 @@ class Chat(Gtk.Window):
                         prefix = "@"
                     label_user = Gtk.Label()
                     label_user.set_markup(prefix + line["user_short"])
-                    tooltip_user = DateTooltip(text=line["user"]["name"] + \
-                        " (" + line["user"]["login"] + ")")
+                    tooltip_user = DateTooltip(text=line["user"]["name"] +
+                                               " (" + line["user"]["login"] +
+                                               ")")
                     label_user.set_has_tooltip(True)
                     label_user.connect("query-tooltip", tooltip_user)
                     label_user.connect("button-press-event", self.paste_nick)
@@ -507,7 +522,8 @@ class Chat(Gtk.Window):
                         self.chat_box.attach(label_date, 1, 1, 1, 1)
                     else:
                         self.chat_box.attach_next_to(label_date, prev,
-                                                     Gtk.PositionType.BOTTOM, 1, 1)
+                                                     Gtk.PositionType.BOTTOM,
+                                                     1, 1)
                     self.chat_box.attach_next_to(label_user, label_date,
                                                  Gtk.PositionType.RIGHT, 1, 1)
                     self.chat_box.attach_next_to(label_msg, label_user,
@@ -560,7 +576,10 @@ class Chat(Gtk.Window):
         self.sending = True
         self.btn_send.set_sensitive(False)
         self.entry.set_progress_pulse_step(0.2)
-        self.timeout_progress_entry = GObject.timeout_add(100, self.do_pulse, None)
+        self.timeout_progress_entry = GObject.timeout_add(
+            100,
+            self.do_pulse,
+            None)
         msg = self.entry.get_text()
         self.thread_send = Thread(target=self.send_msg_thread, args=(msg,))
         self.thread_send.start()
@@ -571,7 +590,7 @@ class Chat(Gtk.Window):
         return True
 
     def check_sent(self, *args):
-        if self.sending == False:
+        if self.sending is False:
             self.btn_send.set_sensitive(True)
             GObject.source_remove(self.timeout_progress_entry)
             self.timeout_progress_entry = None
@@ -583,7 +602,7 @@ class Chat(Gtk.Window):
 
     def send_msg_thread(self, msg):
         try:
-            r = requests.post(URLSEND, headers=HEADERS, data={"text": msg})
+            requests.post(URLSEND, headers=HEADERS, data={"text": msg})
         except:
             pass
         self.sending = False

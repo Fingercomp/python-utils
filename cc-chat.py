@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-   Copyright 2016 Alexander "Fingercomp"
+   Copyright 2016 Fingercomp
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib, GObject, Pango
 
-VERSION = "2.0.2"
+VERSION = "2.1.1"
 
 GLib.threads_init()
 

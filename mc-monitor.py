@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
-# VERSION: 1.14
+# VERSION: 1.2.1
 
 """
    Copyright 2016 Alexander "Fingercomp"

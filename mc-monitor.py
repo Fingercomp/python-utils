@@ -4,7 +4,7 @@
 # VERSION: 1.2.1
 
 """
-   Copyright 2016 Alexander "Fingercomp"
+   Copyright 2016 Fingercomp
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

@@ -20,6 +20,7 @@
 """
 
 from mcstatus import MinecraftServer
+import socket
 import time
 # import datetime as dt
 from threading import Thread
@@ -303,33 +304,76 @@ class CheckServers:
                 }
                 try:
                     server = MinecraftServer.lookup(addr)
-                    status = server.status()
                     try:
                         query = server.query()
                         self.servdata[addr] = {
-                            "online": status.players.online,
-                            "max": status.players.max,
-                            "latency": status.latency,
+                            "online": query.players.online,
+                            "max": query.players.max,
+                            "latency": -1,
                             "soft": query.software.version,
                             "query": True,
                             "ison": True,
                             "players": [pl for pl in query.players.names]
                         }
-                    except:
+                    except (IOError, OSError, ValueError) as e:
                         self.servdata[addr] = {
-                            "online": status.players.online,
-                            "max": status.players.max,
-                            "latency": status.latency,
+                            "online": 0,
+                            "max": 0,
+                            "latency": 0,
                             "soft": "",
                             "query": False,
-                            "ison": True,
+                            "ison": False,
                             "players": []
                         }
-                    finally:
-                        self.totalservdata["online"] += status.players.online
-                        self.totalservdata["max"] += status.players.max
-                except:
-                    # Server is offline =\
+                        print(e)
+                    except (socket.herror, socket.gaierror, socket.timeout):
+                        pass
+                    except:
+                        raise
+
+                    try:
+                        status = server.status()
+                        if (addr in self.servdata and
+                                "latency" in self.servdata[addr] and
+                                self.servdata[addr]["latency"] == -1):
+                            self.servdata[addr]["latency"] = status.latency
+                        else:
+                            self.servdata[addr] = {
+                                "online": status.players.online,
+                                "max": status.players.max,
+                                "latency": status.latency,
+                                "soft": "",
+                                "query": False,
+                                "ison": True,
+                                "players": []
+                            }
+                    except (socket.gaierror, socket.herror, socket.timeout):
+                        if (addr not in self.servdata or
+                                self.servdata[addr]["latency"] != -1):
+                            self.servdata[addr] = {
+                                "online": 0,
+                                "max": 0,
+                                "latency": 0,
+                                "soft": "",
+                                "query": False,
+                                "ison": False,
+                                "players": []
+                            }
+                    except (IOError, OSError, ValueError) as e:
+                        print(e)
+                        self.servdata[addr] = {
+                            "online": 0,
+                            "max": 0,
+                            "latency": 0,
+                            "soft": "",
+                            "query": False,
+                            "ison": False,
+                            "players": []
+                        }
+                    except:
+                        raise
+                except Exception as e:
+                    print(e)
                     self.servdata[addr] = {
                         "online": 0,
                         "max": 0,
@@ -339,7 +383,8 @@ class CheckServers:
                         "ison": False,
                         "players": []
                     }
-                # print("Data [" + addr + "]:", self.servdata[addr])
+                self.totalservdata["online"] += self.servdata[addr]["online"]
+                self.totalservdata["max"] += self.servdata[addr]["max"]
             self.ready_to_show = True
             return True
 

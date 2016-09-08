@@ -133,9 +133,9 @@ class CheckServers:
         conf = open(SERVERSFILE, "r")
         for line in reversed(conf.readlines()):
             line = line.strip()
-            # print(line)
-            data = line.split("=")
-            self.servers[data[0]] = [None, None, data[1]]
+            if line[0] != "#":
+                data = line.split("=")
+                self.servers[data[0]] = [None, None, data[1]]
         conf.close()
 
         self.menu_setup()

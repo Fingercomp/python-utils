@@ -532,8 +532,8 @@ class Chat(Gtk.Window):
         self.chat_box = Gtk.Grid(row_spacing=10)
         self.scrlwnd.add(self.chat_box)
         self.chat_box.set_column_spacing(5)
-        self.chat_box.override_background_color(Gtk.StateType.NORMAL,
-                                                Gdk.RGBA(1, 1, 1, .8))
+        # self.chat_box.override_background_color(Gtk.StateType.NORMAL,
+        #                                         Gdk.RGBA(1, 1, 1, .8))
 
         frame_online = Gtk.Frame()
 
@@ -547,8 +547,8 @@ class Chat(Gtk.Window):
         self.online_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
                                   spacing=5)
         self.scrlwnd_online.add(self.online_box)
-        self.online_box.override_background_color(Gtk.StateType.NORMAL,
-                                                  Gdk.RGBA(1, 1, 1, .8))
+        # self.online_box.override_background_color(Gtk.StateType.NORMAL,
+        #                                           Gdk.RGBA(1, 1, 1, .8))
 
         self.scrlwnd_online.set_size_request(100, -1)
 

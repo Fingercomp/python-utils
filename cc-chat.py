@@ -46,6 +46,18 @@ config = home + ".local/share/python-utils/"
 if not os.path.exists(config):
     os.makedirs(config, exist_ok=True)
 
+if not os.path.exists(config + "icons/"):
+    os.mkdir(config + "icons/")
+
+if not os.path.exists(config + "icons/cc-chat-icon.png"):
+    response = ur.urlopen(
+        "https://raw.githubusercontent.com/Fingercomp/"
+        "python-utils/master/icons/cc-chat-icon.png")
+    f = open(config + "icons/cc-chat-icon.png", "wb")
+    img = response.read()
+    f.write(img)
+    f.close()
+
 if not os.path.exists(config + "cc-chat.cfg"):
     f = open(config + "cc-chat.cfg", "w")
     f.write("")
@@ -58,18 +70,7 @@ if not os.path.exists(config + "cc-chat.cfg"):
                                    "cc-chat.cfg</b>.")
     dialog.run()
     dialog.destroy()
-
-if not os.path.exists(config + "icons/"):
-    os.mkdir(config + "icons/")
-
-if not os.path.exists(config + "icons/cc-chat-icon.png"):
-    response = ur.urlopen(
-        "https://raw.githubusercontent.com/Fingercomp/"
-        "python-utils/master/icons/cc-chat-icon.png")
-    f = open(config + "icons/cc-chat-icon.png", "wb")
-    img = response.read()
-    f.write(img)
-    f.close()
+    sys.exit(1)
 
 userdata = [i.strip() for i in open(config + "cc-chat.cfg").readlines()]
 

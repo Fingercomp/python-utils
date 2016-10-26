@@ -46,19 +46,6 @@ root = Gtk.Application.new(None, 0)
 if not os.path.exists(config):
     os.makedirs(config, exist_ok=True)
 
-if not os.path.exists(config + "ffgs-chat.cfg"):
-    f = open(config + "ffgs-chat.cfg", "w")
-    f.write("")
-    f.close()
-    dialog = Gtk.MessageDialog(parent=Gtk.Window(),
-                               message_type=Gtk.MessageType.INFO,
-                               buttons=Gtk.ButtonsType.OK,
-                               message_format="Configuration file created!")
-    dialog.format_secondary_markup("Path to file: <b>" + config +
-                                   "ffgs-chat.cfg</b>")
-    dialog.run()
-    dialog.destroy()
-
 if not os.path.exists(config + "icons/"):
     os.mkdir(config + "icons/")
 
@@ -70,6 +57,22 @@ if not os.path.exists(config + "icons/ffgs-chat-icon.png"):
     img = response.read()
     f.write(img)
     f.close()
+
+if not os.path.exists(config + "ffgs-chat.cfg"):
+    f = open(config + "ffgs-chat.cfg", "w")
+    f.write("Replace with the `auth_user` cookie value\n"
+            "Replace with the `auth_hash` cookie value")
+    f.close()
+    dialog = Gtk.MessageDialog(parent=Gtk.Window(),
+                               message_type=Gtk.MessageType.INFO,
+                               buttons=Gtk.ButtonsType.OK,
+                               message_format="Configuration file created!")
+    dialog.format_secondary_markup("Path to file: <b>" + config +
+                                   "ffgs-chat.cfg</b>. "
+                                   "Edit it and re-run the program.")
+    dialog.run()
+    dialog.destroy()
+    sys.exit(1)
 
 userdata = [i.strip() for i in open(config + "ffgs-chat.cfg").readlines()]
 

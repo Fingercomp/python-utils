@@ -35,7 +35,8 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib, GObject, Pango
 
-VERSION = "2.1.1"
+VERSION = "2.1.2"
+TIMEOUT = .5
 
 GLib.threads_init()
 
@@ -389,7 +390,7 @@ class InfoWindow(Gtk.Window):
         self.top_uu = []
         user_tops = {"month": 1, "money": 1, "uu": 1}
         try:
-            response = requests.get(URLTOPMONTH)
+            response = requests.get(URLTOPMONTH, timeout=TIMEOUT)
             top_month = json.loads(response.text)
             user_tops["month"] = "N/A"
             for i, val in enumerate(top_month):
@@ -402,7 +403,7 @@ class InfoWindow(Gtk.Window):
             self.top_month = self.old_top_month
 
         try:
-            response = requests.get(URLTOPMONEY)
+            response = requests.get(URLTOPMONEY, timeout=TIMEOUT)
             top_money = json.loads(response.text)
             user_tops["money"] = "N/A"
             for i, val in enumerate(top_money):
@@ -415,7 +416,7 @@ class InfoWindow(Gtk.Window):
             self.top_money = self.old_top_money
 
         try:
-            response = requests.get(URLTOPUU)
+            response = requests.get(URLTOPUU, timeout=TIMEOUT)
             top_uu = json.loads(response.text)
             user_tops["uu"] = "N/A"
             for i, val in enumerate(top_uu):
@@ -430,7 +431,7 @@ class InfoWindow(Gtk.Window):
             self.top_uu = self.old_top_uu
 
         try:
-            response = requests.get(URLINFO + self.nickname)
+            response = requests.get(URLINFO + self.nickname, timeout=TIMEOUT)
             info = json.loads(response.text)[0]
             self.account = {"money": str(info["money"]), "uu": str(info["uu"]),
                             "votes": {"rate": str(info["votes_mcrate"]),
@@ -958,7 +959,8 @@ class Chat(Gtk.Window):
                              "text/xml, */*")
         headers["Cache-Control"] = "no-cache"
         try:
-            requests.post(URLSEND, headers=headers, data={"shout": post_data})
+            requests.post(URLSEND, headers=headers, data={"shout": post_data},
+                          timeout=TIMEOUT)
         except:
             pass
         self.sending = False
@@ -966,7 +968,7 @@ class Chat(Gtk.Window):
     def get_user(self, uid):
         try:
             response = requests.get(URLUSER + uid + "-getuser",
-                                    headers=HEADERS)
+                                    headers=HEADERS, timoeut=TIMEOUT)
             html = Soup(response.text, "html.parser")
             title = html.find("title").string
             if title.split(" ")[0] == "Ошибка":
@@ -1014,7 +1016,7 @@ class Chat(Gtk.Window):
         post_data = parse.quote("<p>" + msg + "</p>", safe="")
         try:
             requests.post(URLEDIT, headers=HEADERS, data={"id": str(shout),
-                          "shout": post_data})
+                          "shout": post_data}, timeout=TIMEOUT)
         except:
             pass
         self.edit_msg = False
@@ -1070,7 +1072,8 @@ class Chat(Gtk.Window):
 
     def delete_shout(self, shout, *args):
         try:
-            requests.get(URLDELETE + str(shout), headers=HEADERS)
+            requests.get(URLDELETE + str(shout), headers=HEADERS,
+                         timeout=TIMEOUT)
         except:
             pass
         self.proceed_delete = 0

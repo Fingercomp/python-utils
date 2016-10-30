@@ -32,7 +32,8 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib, GObject
 
-VERSION = "2.2.0"
+VERSION = "2.2.1"
+TIMEOUT = .5
 
 GLib.threads_init()
 
@@ -216,7 +217,7 @@ class RustWindow(Gtk.Window):
         self.victims = []
 
         try:
-            response = requests.get(URLGETKILLERS)
+            response = requests.get(URLGETKILLERS, timeout=TIMEOUT)
             killers = json.loads(response.text)
             if killers["status"] != "ok" or not killers["body"]:
                 raise Exception
@@ -228,7 +229,7 @@ class RustWindow(Gtk.Window):
             self.killers = self.old_killers
 
         try:
-            response = requests.get(URLGETVICTIMS)
+            response = requests.get(URLGETVICTIMS, timeout=TIMEOUT)
             victims = json.loads(response.text)
             if victims["status"] != "ok" or not victims["body"]:
                 raise Exception
@@ -406,7 +407,8 @@ class Chat(Gtk.Window):
             self.lines = []
             self.online = []
             try:
-                request = requests.get(URLGET, headers=HEADERS)
+                request = requests.get(URLGET, headers=HEADERS,
+                                       timeout=TIMEOUT)
             except:
                 self.lines = old_lines
             else:
@@ -456,7 +458,7 @@ class Chat(Gtk.Window):
                                        "user_short": user_short,
                                        "short": line["date"]["short"]})
             try:
-                request = requests.get(URLONLINE)
+                request = requests.get(URLONLINE, timeout=TIMEOUT)
             except:
                 self.online = old_online
             else:
@@ -466,7 +468,8 @@ class Chat(Gtk.Window):
                 else:
                     self.online = response["Body"]
             try:
-                request = requests.get(URLUSER, headers=HEADERS)
+                request = requests.get(URLUSER, headers=HEADERS,
+                                       timeout=TIMEOUT)
             except:
                 self.logged = False
             else:
@@ -605,7 +608,8 @@ class Chat(Gtk.Window):
 
     def send_msg_thread(self, msg):
         try:
-            requests.post(URLSEND, headers=HEADERS, data={"text": msg})
+            requests.post(URLSEND, headers=HEADERS, data={"text": msg},
+                          timeout=TIMEOUT)
         except:
             pass
         self.sending = False

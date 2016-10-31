@@ -382,6 +382,8 @@ class InfoWindow(Gtk.Window):
         return True
 
     def update_data(self, *args):
+        if True:
+            return True
         if self.quitting:
             return False
         self.updating = True

@@ -711,14 +711,13 @@ class Chat(Gtk.Window):
             old_online = copy.deepcopy(self.online)
             self.lines = []
             self.online = []
-            request = ur.Request(URL, headers=HEADERS)
             try:
-                response = ur.urlopen(request)
+                response = requests.get(URL, headers=HEADERS, timeout=TIMEOUT)
             except:
                 self.lines = old_lines
             else:
-                response = response.read()
-                page = response.decode("utf-8")
+                response.encoding = 'utf-8'
+                page = response.content
                 html = Soup(page, "html.parser")
                 rows = html.find_all("tr")
                 for row in rows:
@@ -812,10 +811,9 @@ class Chat(Gtk.Window):
                             "id": shout_id
                         })
                     self.user_links[author] = author_url
-            request = ur.Request(URLONLINE, headers=HEADERS)
             try:
-                response = json.loads(ur.urlopen(request).read()
-                                      .decode("utf-8"))
+                response = requests.get(URLONLINE, headers=headers,
+                                        timeout=TIMEOUT)
             except:
                 self.online = old_online
             else:

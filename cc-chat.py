@@ -36,7 +36,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib, GObject, Pango
 
 VERSION = "2.1.2"
-TIMEOUT = .5
+TIMEOUT = 1
 
 GLib.threads_init()
 
